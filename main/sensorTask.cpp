@@ -101,7 +101,8 @@ void sensorTask(void *parameters) {
 				printf("error executing read_measurement_values_uint16(): %i\n", error);
 				continue;
 			}
-			xQueueSend(displayMssgBox, &mssg, 0);
+			if( displayMssgBox != NULL)
+				xQueueSend(displayMssgBox, &mssg, 0);
 			memcpy(lastVal.values, values, sizeof(logValue.values));
 
 			time(&now);

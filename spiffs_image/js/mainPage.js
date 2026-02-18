@@ -1,5 +1,5 @@
-var CO2RPMdata;
-var RPMdata;
+var mcData;
+var ncData;
 
 var chartRdy = false;
 var tick = 0;
@@ -20,13 +20,13 @@ var SECONDSPERTICK = (5 * 60);// log interval
 var LOGDAYS = 1;
 var MAXPOINTS = (LOGDAYS * 24 * 60 * 60 / SECONDSPERTICK)
 
-
-var sensorStatus = [-1, -1, -1, -1, -1];
+var mcLabelTxt = ["mc 1p0", "mc 2p5", "mc 4p0","mc 10p0"];
+var ncLabelTxt = ["nc 0p5", "nc 1p0", "nc 2p5", "nc 4p0","nc 10p0"];
 
 
 var NRFields = 4; // timestamp, co2, t , rh 
 
-var CO2Options = {
+var mcOptions = {
 	title: '',
 	curveType: 'function',
 	legend: { position: 'top' },
@@ -46,26 +46,65 @@ var CO2Options = {
 		1: { logScale: false },
 	},
 	series: {
-		0: { targetAxisIndex: 1 },// CO2
-		1: { targetAxisIndex: 0 },// RPM
+		0: { targetAxisIndex: 0 },
+		1: { targetAxisIndex: 0 },
+		2: { targetAxisIndex: 0 },
+		3: { targetAxisIndex: 0 },
+		
 	},
-
 };
 
+var ncOptions = {
+	title: '',
+	curveType: 'function',
+	legend: { position: 'top' },
+	heigth: 200,
+	crosshair: { trigger: 'both' },	// Display crosshairs on focus and selection.
+	explorer: {
+		actions: ['dragToZoom', 'rightClickToReset'],
+		//actions: ['dragToPan', 'rightClickToReset'],
+		axis: 'horizontal',
+		keepInBounds: true,
+		maxZoomIn: 100.0
+	},
+	chartArea: { 'width': '90%', 'height': '80%' },
+
+	vAxes: {
+		0: { logScale: false },
+		1: { logScale: false },
+	},
+	series: {
+		0: { targetAxisIndex: 0 },
+		1: { targetAxisIndex: 0 },
+		2: { targetAxisIndex: 0 },
+		3: { targetAxisIndex: 0 },
+		4: { targetAxisIndex: 0 },
+	},
+};
+
+
+
 function clear() {
-	CO2RPMdata.removeRows(0, CO2RPMdata.getNumberOfRows());
-	CO2RPMchart.draw(CO2RPMdata, CO2Options);
+	mcData.removeRows(0, mcData.getNumberOfRows());
+	mcChart.draw(mcData, mcOptions);
 }
 
 //var formatter_time= new google.visualization.DateFormat({formatType: 'long'});
 // channel 1 .. 5
 
 function initChart() {
-	CO2RPMchart = new google.visualization.LineChart(document.getElementById('CO2RPMchart'));
-	CO2RPMdata = new google.visualization.DataTable();
-	CO2RPMdata.addColumn('string', 'Time');
-	CO2RPMdata.addColumn('number', "CO2 (ppm)");
-	CO2RPMdata.addColumn('number', "Toerental (%)");
+	mcChart = new google.visualization.LineChart(document.getElementById('mcChart'));
+	mcData = new google.visualization.DataTable();
+	mcData.addColumn('string', 'Time');
+	for ( var m =0 ; m < mcLabelTxt.length; m++ ) 
+		mcData.addColumn('number', mcLabelTxt[m]);
+
+	ncChart = new google.visualization.LineChart(document.getElementById('ncChart'));
+	ncData = new google.visualization.DataTable();
+	ncData.addColumn('string', 'Time');
+	for ( var m =0 ; m < ncLabelTxt.length; m++ ) 
+		mcData.addColumn('number', ncLabelTxt[m]);
+
 	if (SIMULATE) {
 		simplot();
 	//	plotTest();
@@ -79,34 +118,45 @@ function startTimer() {
 	setInterval(function () { timer() }, 1000);
 }
 
-function plotCO2RPM(co2, rpm, timeStamp) {
+// plots one sample ( array of 10 items)
+function plot(values, timeStamp) {
 	var row;
-	CO2RPMdata.addRow();
-	row = CO2RPMdata.getNumberOfRows();
+	var item;
+	mcData.addRow();
+	row = mcData.getNumberOfRows();
 	if (row > MAXPOINTS ) {
-		CO2RPMdata.removeRows(0, 1);
+		mcData.removeRows(0, 1);
+		ncData.removeRows(0,1); 
 		row--;
 	}
 	var date = new Date(timeStamp);
 	var labelText = date.getHours() + ":" + date.getMinutes() + ":" + date.getSeconds();
 	row--;
-	CO2RPMdata.setValue(row , 0, labelText);
 
-	var value = parseFloat(co2);
-	CO2RPMdata.setValue(row, 1, value);
-	value = parseInt(rpm);
-	CO2RPMdata.setValue(row, 2, value);
+	mcData.setValue(row , 0, labelText);
+	ncData.setValue(row , 0, labelText);
+	item = 0;
+	for ( var m =0 ; m < mcLabelTxt.length; m++ ) {  // plot 4 values in mcChart
+		var value = parseFloat(value[item]);
+		mcData.setValue(row, item+1, value);
+		item++;
+	}
+	for ( var m =0 ; m < ncLabelTxt.length; m++ ) {  // plot 5 values in ncChart
+		var value = parseFloat(value[item]);
+		ncData.setValue(row, item+1, value);
+		item++;
+	}
+	
 }
-
-// "S0", ts, co20, temp0, hum0, "S1", ts, co21, temp1, hum1, "S2", ts, co22, temp2, hum2 ,"S3", ts, co23, temp3, hum3, S4, ts, co24, temp4, hum4, co2Max, RPM\n     
-function plotCO2RPMLog(str) {
+    
+function plotLog(str) {
 	var arr;
 	var timeOffset;
 	var sampleTime;
 	var measTimeLastSample;
 	var arr2 = str.split("\n");
 
-	var nrPoints = arr2.length - 1;  // blocks of 4 sensors
+	var nrPoints = arr2.length - 1;  
 	if (nrPoints > 0) {
 		var arr = arr2[nrPoints - 1].split(",");   
 		measTimeLastSample = arr[1];
@@ -118,10 +168,11 @@ function plotCO2RPMLog(str) {
 			arr = arr2[p].split(",");   
 			if (arr.length >= NRFields) {
 				sampleTime = parseFloat(arr[1]) * 1000 + timeOffset;
-				plotCO2RPM( arr[26], arr[28], sampleTime);
+				plot( arr[2], sampleTime);
 			}
 		}
-		CO2RPMchart.draw(CO2RPMdata, CO2Options);
+		mcChart.draw(mcData, mcOptions);
+		ncChart.draw(ncData, ncOptions);
 	}
 }
 
@@ -129,7 +180,7 @@ function simplot() {
 	var str = "S0,1,460,21.1,30  S1,1,460,21.1,30 S2,1,560,25.1,65 S3,1,660,8,70 S4,1,460,21.1,99, 450, 2000\n";
 	str += "S0,1,460,21.9,32 S1,2,470,21.5,35 S2,1,570,26.1,65 S3,1,670,9,72 S4,1,460,21.1,99, 500, 2200\n";
 	str += "S0,1,460,29.1,70 S1,3,480,21.7,40 S2,1,590,25.1,60 S3,1,680,10,65 S4,1,460,21.1,110, 600, 3000\n";
-	plotCO2RPMLog(str);
+	plotLog(str);
 
 }
 
@@ -143,8 +194,9 @@ function timer() {
 	else {
 		if (firstRequest) {
 			arr = getItem("getLogMeasValues");
-			CO2RPMdata.removeRows(0, CO2RPMdata.getNumberOfRows());
-			plotCO2RPMLog(arr);
+			mcData.removeRows(0, mcData.getNumberOfRows());
+			ncData.removeRows(0, ncData.getNumberOfRows());
+			plotLog(arr);
 			firstRequest = false;
 		}
 		str = getItem("getRTMeasValues"); // request data from enabled sensors
@@ -154,7 +206,7 @@ function timer() {
 				if (arr[1] > 0) {
 					if (arr[1] != lastTimeStamp) {
 						lastTimeStamp = arr[1];
-						plotCO2RPMLog(str);
+						plotLog(str);
 					}
 				}
 			}
@@ -165,8 +217,10 @@ function timer() {
 }
 
 function clearChart() {
-	CO2RPMdata.removeRows(0, CO2RPMdata.getNumberOfRows());
-	CO2RPMchart.draw(CO2RPMdata, CO2Options);
+	ncData.removeRows(0, ncData.getNumberOfRows());
+	mcData.removeRows(0, mcData.getNumberOfRows());
+	ncChart.draw(ncData, ncOptions);
+	mcChart.draw(mcData, mcOptions);
 }
 
 function clearLog() {
@@ -175,7 +229,8 @@ function clearLog() {
 }
 
 function refreshChart() {
-	CO2RPMdata.removeRows(0, CO2RPMdata.getNumberOfRows());
+	ncData.removeRows(0, ncData.getNumberOfRows());
+	mcData.removeRows(0, mcData.getNumberOfRows());
 	arr = getItem("getLogMeasValues");
 	plotArray(arr);
 }

@@ -332,9 +332,12 @@ static void event_handler(void *arg, esp_event_base_t event_base, int32_t event_
 			ip_event_got_ip_t *event = (ip_event_got_ip_t *)event_data;
 			sprintf(myIpAddress, IPSTR, IP2STR(&event->ip_info.ip));
 			wpsOff = true; // once wps after powerup
+			#ifdef USE_EMAIL
 			if (!emailIsSend)
 				sendLogInMssg();
 			emailIsSend = true;
+			#endif
+			
 
 			if (enableFixedIP && (advSettings.fixedIPdigit > 0)) { // check if the last digit of IP address = CONFIG_FIXED_LAST_IP_DIGIT
 				uint32_t addr = event->ip_info.ip.addr;
