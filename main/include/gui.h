@@ -12,6 +12,8 @@ void initMeasureScreen(void);
 extern QueueHandle_t displayMssgBox;
 extern QueueHandle_t displayReadyMssgBox;
 
+extern const char measLabelTxt[][10] ;
+
 typedef struct {
     float * values;
 } displayMssg_t;

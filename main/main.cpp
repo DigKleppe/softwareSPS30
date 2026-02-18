@@ -18,6 +18,7 @@
 
 
 i2c_master_bus_handle_t bus_handle;
+uint32_t timeStamp = 1; // global timestamp for logging
 
 extern "C" void app_main() {
 
@@ -28,6 +29,7 @@ extern "C" void app_main() {
 	xTaskCreate(sensorTask, "sensorTask", 4096, NULL, 0, NULL);
 
 	while (1) {
-		vTaskDelay(100);
+		vTaskDelay(1000);
+		timeStamp++;
 	}
 }

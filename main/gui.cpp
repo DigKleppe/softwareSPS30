@@ -11,7 +11,7 @@
 void initializeLCD();
 
 static lv_style_t style1;
-static char measLabelTxt[][10] = {{"mc 1p0"}, {"mc 2p5"},  {"mc 4p0"},	{"mc 10p0"},  {"nc 0p5"},
+const char measLabelTxt[][10] = {{"mc 1p0"}, {"mc 2p5"},  {"mc 4p0"},	{"mc 10p0"},  {"nc 0p5"},
 								  {"nc 1p0"}, {"ncc 2p5"}, {"ncc 4p0"}, {"ncc 1-p0"}, {"typ size"}};
 
 static int LINEHEIGHT = 30;
@@ -126,9 +126,9 @@ void updateValues(float *values) {
 	if (isInitialized) {
 		char str[20];
 		for (int n = 0; n < NR_VALUES; n++) {
-			// if ( n < (NR_VALUES-1))
-			// 	sprintf(str,"%3.1f", *values++ /1000);
-			// else
+			if ( n < (NR_VALUES-1))
+				sprintf(str,"%3.1f", *values++ /1000);
+			else
 				sprintf(str,"%3.2f", *values++ ); // typ_size
 			// lv_label_set_text_fmt(valueLabel[n],"%3.1f", *values);
 			lv_label_set_text_fmt(valueLabel[n], str);
