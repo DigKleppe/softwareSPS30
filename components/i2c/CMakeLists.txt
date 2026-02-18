@@ -1,0 +1,5 @@
+set(COMPONENT_SRCDIRS ".")
+set(COMPONENT_ADD_INCLUDEDIRS "include")
+set(COMPONENT_PRIV_REQUIRES  "esp_driver_i2c")
+#set(COMPONENT_EMBED_FILES "favicon.ico")
+register_component()
