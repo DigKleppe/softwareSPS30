@@ -37,7 +37,6 @@ static bool isInitialized;
 QueueHandle_t displayMssgBox;
 QueueHandle_t displayReadyMssgBox;
 
-
 // void initMeasureScreen(void) {
 // 	static int32_t col_dsc[] = {70, 70, 70, LV_GRID_TEMPLATE_LAST};
 // 	static int32_t row_dsc[] = {50, 50, 50, LV_GRID_TEMPLATE_LAST};
@@ -110,7 +109,7 @@ void initMeasureScreen(void) {
 
 		obj = lv_obj_create(cont);
 		lv_obj_add_style(obj, &style1, 0);
-	
+
 		/*Stretch the cell horizontally and vertically too
 		 *Set span to 1 to make the cell 1 column/row sized*/
 		lv_obj_set_grid_cell(obj, LV_GRID_ALIGN_STRETCH, 1, 1, LV_GRID_ALIGN_STRETCH, line, 1);
@@ -123,22 +122,24 @@ void initMeasureScreen(void) {
 	}
 }
 
-void updateValues(uint16_t *values) {
+void updateValues(float *values) {
 	if (isInitialized) {
+		char str[20];
 		for (int n = 0; n < NR_VALUES; n++) {
-			lv_label_set_text_fmt(valueLabel[n],"%d", *values);
-		//	lv_label_set_text_fmt(valueLabel[n], "hallo"); // *values);
-			values++;
+			// if ( n < (NR_VALUES-1))
+			// 	sprintf(str,"%3.1f", *values++ /1000);
+			// else
+				sprintf(str,"%3.2f", *values++ ); // typ_size
+			// lv_label_set_text_fmt(valueLabel[n],"%3.1f", *values);
+			lv_label_set_text_fmt(valueLabel[n], str);
 		}
 	}
-
 }
 
 void guiTask(void *pvParameter) {
-    displayMssg_t recDdisplayMssg;
-   	displayMssgBox = xQueueCreate(5, sizeof(displayMssg_t));
+	displayMssg_t recDdisplayMssg;
+	displayMssgBox = xQueueCreate(5, sizeof(displayMssg_t));
 	displayReadyMssgBox = xQueueCreate(1, sizeof(uint32_t));
-
 
 	initializeLCD();
 
@@ -148,9 +149,8 @@ void guiTask(void *pvParameter) {
 	while (1) {
 		vTaskDelay(10 / portTICK_PERIOD_MS);
 		lv_timer_handler();
-        if (xQueueReceive(displayMssgBox, &recDdisplayMssg, 0) == pdTRUE) {
-            updateValues(recDdisplayMssg.values);
-        }
-
+		if (xQueueReceive(displayMssgBox, &recDdisplayMssg, 0) == pdTRUE) {
+			updateValues(recDdisplayMssg.values);
+		}
 	}
 }

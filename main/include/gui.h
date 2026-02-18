@@ -13,5 +13,5 @@ extern QueueHandle_t displayMssgBox;
 extern QueueHandle_t displayReadyMssgBox;
 
 typedef struct {
-    uint16_t * values;
+    float * values;
 } displayMssg_t;
