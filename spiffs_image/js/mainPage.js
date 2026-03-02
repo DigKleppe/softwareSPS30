@@ -123,6 +123,7 @@ function plot(values, timeStamp) {
 	var row;
 	var item;
 	mcData.addRow();
+	ncData.addRow();
 	row = mcData.getNumberOfRows();
 	if (row > MAXPOINTS ) {
 		mcData.removeRows(0, 1);
@@ -135,16 +136,18 @@ function plot(values, timeStamp) {
 
 	mcData.setValue(row , 0, labelText);
 	ncData.setValue(row , 0, labelText);
-	item = 0;
+	item = 1; // item 0 is timestamp
 	for ( var m =0 ; m < mcLabelTxt.length; m++ ) {  // plot 4 values in mcChart
-		var value = parseFloat(value[item]);
-		mcData.setValue(row, item+1, value);
+		var value = parseFloat(values[item]);
+		mcData.setValue(row, item, value);
 		item++;
 	}
+	var col = 1;
 	for ( var m =0 ; m < ncLabelTxt.length; m++ ) {  // plot 5 values in ncChart
-		var value = parseFloat(value[item]);
-		ncData.setValue(row, item+1, value);
+		var value = parseFloat(values[item]);
+		ncData.setValue(row, col, value);
 		item++;
+		col++;
 	}
 	
 }
@@ -159,7 +162,7 @@ function plotLog(str) {
 	var nrPoints = arr2.length - 1;  
 	if (nrPoints > 0) {
 		var arr = arr2[nrPoints - 1].split(",");   
-		measTimeLastSample = arr[1];
+		measTimeLastSample = arr[0];
 			
 		var sec = Date.now();//  / 1000;  // mseconds since 1-1-1970 
 		timeOffset = sec - parseFloat(measTimeLastSample) * 1000;
@@ -167,8 +170,8 @@ function plotLog(str) {
 		for (var p = 0; p < nrPoints; p++) {
 			arr = arr2[p].split(",");   
 			if (arr.length >= NRFields) {
-				sampleTime = parseFloat(arr[1]) * 1000 + timeOffset;
-				plot( arr[2], sampleTime);
+				sampleTime = parseFloat(arr[0]) * 1000 + timeOffset;
+				plot( arr, sampleTime);
 			}
 		}
 		mcChart.draw(mcData, mcOptions);

@@ -7,7 +7,6 @@
 #include "sensirion_i2c_hal.h"
 #include "sps30_i2c.h"
 
-
 #include "guiTask.h"
 #include "i2c.h"
 
@@ -24,7 +23,7 @@
 #define CLKSPEED 100000
 
 #define LOGINTERVAL 5 // minutes
-#define AVERAGES 10	  // number of values to average
+#define AVERAGES 30	  // number of values to average
 
 const char measLabelTxt[][10] = {{"mc 1p0"}, {"mc 2p5"}, {"mc 4p0"}, {"mc 10p0"}, {"nc 0p5"},
 								 {"nc 1p0"}, {"nc 2p5"}, {"nc 4p0"}, {"nc 10p0"}, {"typ size"}};
@@ -44,7 +43,9 @@ esp_err_t SPS30AddDeviceToBus(i2c_master_bus_handle_t *bus_handle) {
 	return i2c_master_bus_add_device(*bus_handle, &dev_config, &SPS30_dev_handle);
 }
 
-float values[NR_VALUES];
+
+
+Averager averager[NR_MEASVALUES];
 
 void sensorTask(void *parameters) {
 	esp_err_t error = ESP_OK;
@@ -55,8 +56,12 @@ void sensorTask(void *parameters) {
 	time_t now = 0;
 	struct tm timeinfo;
 	int logPrescaler = 1;
+	float values[NR_MEASVALUES];
+	float avGvalues[ NR_MEASVALUES];
 
-	mssg.values = &values[0];
+
+	for (int n = 0; n < NR_MEASVALUES; n++)
+		averager[n].setAverages(AVERAGES);
 
 	SPS30AddDeviceToBus(&bus_handle);
 
@@ -103,25 +108,32 @@ void sensorTask(void *parameters) {
 			if (error != NO_ERROR) {
 				printf("error executing read_measurement_values_uint16(): %i\n", error);
 				continue;
-			}
-			if( displayMssgBox != NULL)
-				xQueueSend(displayMssgBox, &mssg, 0);
-			memcpy(lastVal.values, values, sizeof(logValue.values));
+			} else {
+				for ( int n = 0; n < NR_MEASVALUES;n++) {
+					averager[n].write( (int) 1000.0 * values[n]);
+					avGvalues[n] =  averager[n].average()/ 1000;
+				}
+				mssg.values = &avGvalues[0];
+				if (displayMssgBox != NULL)
+					xQueueSend(displayMssgBox, &mssg, 0);
+				memcpy(lastVal.values, avGvalues, sizeof(logValue.values));
+				lastVal.timeStamp = timeStamp;
 
-			time(&now);
-			localtime_r(&now, &timeinfo);
-			if (lastminute == -1) {
-				lastminute = timeinfo.tm_min;
-			}
-			if (lastminute != timeinfo.tm_min) {
-				lastminute = timeinfo.tm_min; // every minute
+				time(&now);
+				localtime_r(&now, &timeinfo);
+				if (lastminute == -1) {
+					lastminute = timeinfo.tm_min;
+				}
+				if (lastminute != timeinfo.tm_min) {
+					lastminute = timeinfo.tm_min; // every minute
 
-				if (logPrescaler > 0) {
-					logPrescaler--;
-				} else {
-					logPrescaler = LOGINTERVAL; // reset prescaler
-					memcpy(logValue.values, values, sizeof(logValue.values));
-					addToLog(logValue);
+					if (logPrescaler > 0) {
+						logPrescaler--;
+					} else {
+						logPrescaler = LOGINTERVAL; // reset prescaler
+						memcpy(logValue.values, avGvalues, sizeof(logValue.values));
+						addToLog(logValue);
+					}
 				}
 			}
 
@@ -164,7 +176,7 @@ void sensorTask(void *parameters) {
 int printLog(log_t *logToPrint, char *pBuffer) {
 	int len = 0;
 	len = sprintf(pBuffer, "%ld,", logToPrint->timeStamp);
-	for (int n = 0; n < NR_VALUES; n++)
+	for (int n = 0; n < NR_MEASVALUES; n++)
 		len += sprintf(pBuffer + len, "%3.1f,", logToPrint->values[n]);
 	len += sprintf(pBuffer + len, "\n");
 	return len;
