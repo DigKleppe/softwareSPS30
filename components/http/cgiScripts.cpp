@@ -305,7 +305,7 @@ int readVarScript(char *pBuffer, int count) {
 }
 
 void CGI_init(void) {
-//	g_pCGIs = CGIurls; // for file_server to read CGIurls
+	g_pCGIs = CGIurls; // for file_server to read CGIurls
 //	g_iNumCGIs = NUM_CGIurls;
 
 }

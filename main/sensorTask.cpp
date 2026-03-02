@@ -8,7 +8,7 @@
 #include "sps30_i2c.h"
 
 
-#include "gui.h"
+#include "guiTask.h"
 #include "i2c.h"
 
 #include "CGIcommonScripts.h"
@@ -25,6 +25,9 @@
 
 #define LOGINTERVAL 5 // minutes
 #define AVERAGES 10	  // number of values to average
+
+const char measLabelTxt[][10] = {{"mc 1p0"}, {"mc 2p5"}, {"mc 4p0"}, {"mc 10p0"}, {"nc 0p5"},
+								 {"nc 1p0"}, {"nc 2p5"}, {"nc 4p0"}, {"nc 10p0"}, {"typ size"}};
 
 extern i2c_master_dev_handle_t SPS30_dev_handle;
 extern int scriptState;

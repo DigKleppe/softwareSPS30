@@ -103,7 +103,7 @@ function initChart() {
 	ncData = new google.visualization.DataTable();
 	ncData.addColumn('string', 'Time');
 	for ( var m =0 ; m < ncLabelTxt.length; m++ ) 
-		mcData.addColumn('number', ncLabelTxt[m]);
+		ncData.addColumn('number', ncLabelTxt[m]);
 
 	if (SIMULATE) {
 		simplot();

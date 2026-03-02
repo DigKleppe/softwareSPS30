@@ -138,6 +138,7 @@ void updateValues(float *values) {
 
 void guiTask(void *pvParameter) {
 	displayMssg_t recDdisplayMssg;
+	int ms;
 	displayMssgBox = xQueueCreate(5, sizeof(displayMssg_t));
 	displayReadyMssgBox = xQueueCreate(1, sizeof(uint32_t));
 
@@ -147,10 +148,11 @@ void guiTask(void *pvParameter) {
 	isInitialized = true;
 
 	while (1) {
-		vTaskDelay(10 / portTICK_PERIOD_MS);
-		lv_timer_handler();
+	//	vTaskDelay(10 / portTICK_PERIOD_MS);
+		ms= lv_timer_handler();
+		vTaskDelay(ms / portTICK_PERIOD_MS);
 		if (xQueueReceive(displayMssgBox, &recDdisplayMssg, 0) == pdTRUE) {
-			updateValues(recDdisplayMssg.values);
+		//	updateValues(recDdisplayMssg.values);
 		}
 	}
 }

@@ -1,30 +1,6 @@
 dependencies:
-  atanisoft/esp_lcd_ili9488:
-    component_hash: 45d4c19647801a7000f9106b39127576fb58bd623fb13c1453071190c6f0b8e3
-    dependencies:
-    - name: idf
-      require: private
-      version: '>=4.4.2'
-    source:
-      registry_url: https://components.espressif.com/
-      type: service
-    version: 1.1.0
-  espressif/esp_lvgl_port:
-    component_hash: f872401524cb645ee6ff1c9242d44fb4ddcfd4d37d7be8b9ed3f4e85a404efcd
-    dependencies:
-    - name: idf
-      require: private
-      version: '>=5.1'
-    - name: lvgl/lvgl
-      registry_url: https://components.espressif.com
-      require: public
-      version: '>=8,<10'
-    source:
-      registry_url: https://components.espressif.com/
-      type: service
-    version: 2.7.0
   espressif/mdns:
-    component_hash: 29e47564b1a7ee778135e17fbbf2a2773f71c97ebabfe626c8eda7c958a7ad16
+    component_hash: 043f989435fd88f771c70507bfde854380c259a8fec8c0d60bcfd8714f16960e
     dependencies:
     - name: idf
       require: private
@@ -32,24 +8,22 @@ dependencies:
     source:
       registry_url: https://components.espressif.com/
       type: service
-    version: 1.9.1
+    version: 1.10.0
   idf:
     source:
       type: idf
-    version: 5.5.2
+    version: 5.5.3
   lvgl/lvgl:
-    component_hash: 17e68bfd21f0edf4c3ee838e2273da840bf3930e5dbc3bfa6c1190c3aed41f9f
+    component_hash: d7c1ac037ae6e85d94897f807d6e7ba0946a83e720074fc95a4f6241da9f9f53
     dependencies: []
     source:
       registry_url: https://components.espressif.com/
       type: service
-    version: 9.4.0
+    version: 8.4.0
 direct_dependencies:
-- atanisoft/esp_lcd_ili9488
-- espressif/esp_lvgl_port
 - espressif/mdns
 - idf
 - lvgl/lvgl
-manifest_hash: 03dfe21868d0a5a93646a7f20988229270b8539658d1ec5d96e483078358d177
+manifest_hash: 38cbe7eac321a7a8f47343de6ef7ccfb3d3eebd4b2060a9c72d7847e311f82ec
 target: esp32s3
 version: 2.0.0

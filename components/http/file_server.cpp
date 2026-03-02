@@ -15,6 +15,8 @@
 #include <dirent.h>
 
 #include "esp_err.h"
+
+#define LOG_LOCAL_LEVEL  ESP_LOG_INFO  
 #include "esp_log.h"
 
 #include "esp_vfs.h"
@@ -293,7 +295,7 @@ static esp_err_t download_get_handler(httpd_req_t *req) {
 		}
 	}
 
-//	ESP_LOGI(TAG, "Sending file : %s (%ld bytes)...", filename, file_stat.st_size);
+	ESP_LOGD(TAG, "Sending file : %s (%ld bytes)...", filename, file_stat.st_size);
 
 	if (foundCGI) {
 		//	ESP_LOGI(TAG, "Sending CG responsefile : %s ...", filename);
@@ -308,7 +310,7 @@ static esp_err_t download_get_handler(httpd_req_t *req) {
 			do {
 				/* Read file in chunks into the scratch buffer */
 				chunksize = readResponseFile(chunk, SCRATCH_BUFSIZE);
-		//		ESP_LOGE(TAG, "sending %d bytes", chunksize);
+				ESP_LOGD(TAG, "sending %d bytes", chunksize);
 				if (chunksize > 0) {
 					/* Send the buffer contents as HTTP response chunk */
 					if (httpd_resp_send_chunk(req, chunk, chunksize) != ESP_OK) {
@@ -368,7 +370,7 @@ static esp_err_t download_get_handler(httpd_req_t *req) {
 		/* Close file after sending complete */
 		fclose(fd);
 	}
-//	ESP_LOGI(TAG, "File sending complete %s (%ld bytes)", filename, file_stat.st_size);
+	ESP_LOGD(TAG, "File sending complete %s (%ld bytes)", filename, file_stat.st_size);
 
 	/* Respond with an empty chunk to signal HTTP response completion */
 	httpd_resp_send_chunk(req, NULL, 0);
