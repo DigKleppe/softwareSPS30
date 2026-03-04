@@ -28,7 +28,7 @@ extern lv_style_t styleSymbol;
 #define DEFAULTBORDERCOLOR			lv_color_make(0, 255, 0)
 #define DEFAULTBACKGROUNDCOLOR 		lv_color_black()
 
-#define MEASFONT					cantarel25  //cantarelLight75  //dejavusansEL75
+#define MEASFONT					cantarel25   //cantarelLight75  //dejavusansEL75  cantarel25
 #define MEASUNITFONT				cantarelLight50 // insloata60_4bppSub
 #define MEASNAMEFONT 				cantarel25  //cantarelRegular20 // lv_font_montserrat_20
 #define MEASVALUECOLOR				DEFAULTVALUECOLOR

@@ -21,13 +21,12 @@ lv_style_t styleClock;
 lv_style_t styleInfo;
 lv_style_t styleSymbol;
 
-void initStyles ( void){
+void initStyles(void) {
 
-	//lv_color_t c;
 	lv_style_init(&style_background);
 	lv_style_set_bg_color(&style_background, DEFAULTBACKGROUNDCOLOR);
-	lv_style_set_border_width(&style_background,0);
-	lv_style_set_radius(&style_background,0);
+	lv_style_set_border_width(&style_background, 0);
+	lv_style_set_radius(&style_background, 0);
 
 	lv_style_init(&styleValue);
 	lv_style_set_bg_color(&styleValue, MEASVALUEBGCOLOR);
@@ -49,24 +48,21 @@ void initStyles ( void){
 	lv_style_set_text_font(&styleNavArrows, &NAVIGARROWS_FONT);
 	lv_style_set_text_color(&styleNavArrows, NAVIGARROWSCOLOR);
 
-// spinbuttons
-	lv_style_init(&styleSpin);  // value
+	// spinbuttons
+	lv_style_init(&styleSpin); // value
 	lv_style_set_bg_color(&styleSpin, SPINBUTTONVALUEBGCOLOR);
 	lv_style_set_text_font(&styleSpin, &SPINBUTTONFONT);
 	lv_style_set_text_color(&styleSpin, SPINBUTTONVALUECOLOR);
-//	lv_style_set_radius(&styleSpin, 5);
-//	lv_style_set_bg_opa(&styleSpin, LV_OPA_COVER);
-//	lv_style_set_border_width(&styleSpin, 2);
-//	lv_style_set_border_color(&styleSpin,  DEFAULTBORDERCOLOR);
+
 	lv_style_init(&styleSpinButtonName);
-	lv_style_set_bg_color(&styleSpinButtonName,SPINBUTTONAME_BGCOLOR);
+	lv_style_set_bg_color(&styleSpinButtonName, SPINBUTTONAME_BGCOLOR);
 	lv_style_set_text_font(&styleSpinButtonName, &SPINBUTTONNAMEFONT);
 	lv_style_set_text_color(&styleSpinButtonName, SPINBUTTONNAMECOLOR);
 
 	lv_style_init(&styleSpinButton);
 	lv_style_set_bg_color(&styleSpinButton, SPINBUTTONBACKGROUNDCOLOR);
 	lv_style_set_text_font(&styleSpinButton, &SPINBUTTONFONT);
-	lv_style_set_text_color(&styleSpinButton,SPINBUTTONVALUECOLOR);
+	lv_style_set_text_color(&styleSpinButton, SPINBUTTONVALUECOLOR);
 
 	lv_style_init(&styleClock);
 	lv_style_set_text_font(&styleClock, &CLOCKFONT);
@@ -82,12 +78,4 @@ void initStyles ( void){
 	lv_style_set_text_font(&styleInfo, &INFOFONT);
 	lv_style_set_text_color(&styleInfo, INFOCOLOR);
 	lv_style_set_bg_color(&styleInfo, INFOBGCOLOR);
-
-//	lv_style_set_radius(&styleClock, 5);
-//	lv_style_set_bg_opa(&styleClock, LV_OPA_COVER);
-//	lv_style_set_border_width(&styleClock, 1);
-//	lv_style_set_border_color(&styleClock,  DEFAULTBORDERCOLOR);
-//	lv_style_set_text_align(&styleClock, LV_TEXT_ALIGN_CENTER);
-
 }
-

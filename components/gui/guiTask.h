@@ -23,6 +23,8 @@ typedef enum {
 typedef struct {
 	displayItem_t displayItem;
 	float  *values;
+	const char *str1;
+	const char *str2;
 } displayMssg_t;
 
 extern "C" {

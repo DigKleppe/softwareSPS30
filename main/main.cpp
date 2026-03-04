@@ -32,6 +32,10 @@ i2c_master_bus_handle_t bus_handle;
 uint32_t timeStamp = 1; // global timestamp for logging
 
 extern "C" void app_main() {
+	bool toggle = false;
+	int dummy;
+	displayMssg_t displayMssg;
+	char str[20];
 
 	esp_err_t err = init_spiffs();
 	if (err != ESP_OK) {
@@ -68,9 +72,38 @@ extern "C" void app_main() {
 
 	xTaskCreatePinnedToCore(guiTask, "guiTask", 4096, NULL, 0, &guiTaskh, 1);
 	xTaskCreate(sensorTask, "sensorTask", 2 * 4096, NULL, 0, NULL);
+	
+	displayMssg.str1 = str;
 
 	while (1) {
 		vTaskDelay(1000);
 		timeStamp++;
+
+		displayMssg.displayItem = DISPLAY_ITEM_STATUSLINE;
+		switch (connectStatus) {
+		case CONNECT_READY:
+			str[0] = 0; // clear statusline
+			break;
+
+		case WPS_ACTIVE:
+			toggle = !toggle;
+			if (toggle)
+				sprintf(str, "Geen wifi");
+			else
+				sprintf(str, "Druk WPS op modem");
+			break;
+
+		default:
+			toggle = !toggle;
+			if (toggle)
+				sprintf(str, "Verbinden met:");
+			else
+				//	snprintf(str, 20, "%s", wifiSettings.SSID);
+				snprintf(str, (volatile size_t){sizeof(str)}, wifiSettings.SSID);
+			break;
+		}
+
+		if (xQueueSend(displayMssgBox, &displayMssg, 0) == pdPASS)
+			xQueueReceive(displayReadyMssgBox, &dummy, 500); // if accepted wait until data is displayed
 	}
 }

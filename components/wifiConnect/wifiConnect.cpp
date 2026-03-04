@@ -21,14 +21,13 @@ handles wifi connect process
 #include "settings.h"
 #include "softwareVersions.h"
 
-
 extern const tCGI CGIurls[];
 
 #include "esp_smartconfig.h"
 #include "wifiConnect.h"
 #ifndef CONFIG_FIXED_LAST_IP_DIGIT
-#define  CONFIG_FIXED_LAST_IP_DIGIT 0  // ip will be xx.xx.xx.pp    xx from DHCP  , <= 0 disables this
-//#define CONFIG_FIXED_LAST_IP_DIGIT  userSettings.fixedIPdigit  // ip will be xx.xx.xx.pp    xx from DHCP  , <= 0 disables this
+#define CONFIG_FIXED_LAST_IP_DIGIT 0 // ip will be xx.xx.xx.pp    xx from DHCP  , <= 0 disables this
+// #define CONFIG_FIXED_LAST_IP_DIGIT  userSettings.fixedIPdigit  // ip will be xx.xx.xx.pp    xx from DHCP  , <= 0 disables this
 #endif
 
 /*set wps mode via project configuration */
@@ -55,7 +54,7 @@ static int s_ap_creds_num = 0;
 static int s_retry_num = 0;
 void initialiseMdns(char *hostName);
 esp_err_t start_file_server(const char *base_path);
-//extern const tCGI CGIurls[];
+// extern const tCGI CGIurls[];
 
 char myIpAddress[16];
 bool DHCPoff;
@@ -71,30 +70,26 @@ volatile connectStatus_t connectStatus;
 static void setStaticIp(esp_netif_t *netif);
 esp_err_t saveSettings(void);
 
-
-
-
 // typedef struct {
 // 	char SSID[33];
 // 	char pwd[64];
 // 	esp_ip4_addr_t ip4Address;
 // 	esp_ip4_addr_t gw;
-// 	char upgradeServer[32] ; 
-// 	char upgradeURL[128]; 	 
-// 	char upgradeFileName[32]; 
+// 	char upgradeServer[32] ;
+// 	char upgradeURL[128];
+// 	char upgradeFileName[32];
 // 	char firmwareVersion[MAX_STORAGEVERSIONSIZE]; // holding current app version
 // 	char SPIFFSversion[MAX_STORAGEVERSIONSIZE];	// holding current spiffs version
 // 	bool updated;
 // }wifiSettings_t;
-
 
 wifiSettings_t wifiSettings;
 // wifiSettings_t wifiSettingsDefaults = { CONFIG_EXAMPLE_WIFI_SSID,
 // CONFIG_EXAMPLE_WIFI_PASSWORD,ipaddr_addr(DEFAULT_IPADDRESS),ipaddr_addr(DEFAULT_GW),CONFIG_DEFAULT_FIRMWARE_UPGRADE_URL,CONFIG_FIRMWARE_UPGRADE_FILENAME,false
 // };
 wifiSettings_t wifiSettingsDefaults = {
-//	CONFIG_EXAMPLE_WIFI_SSID,
-//	CONFIG_EXAMPLE_WIFI_PASSWORD,
+	//	CONFIG_EXAMPLE_WIFI_SSID,
+	//	CONFIG_EXAMPLE_WIFI_PASSWORD,
 	ESP_WIFI_SSID,
 	ESP_WIFI_PASS,
 	ipaddr_addr(DEFAULT_IPADDRESS),
@@ -169,15 +164,14 @@ int getRssi(void) {
 		return 0;
 	}
 }
-static esp_err_t set_dns_server(esp_netif_t *netif, uint32_t addr, esp_netif_dns_type_t type)
-{
-    if (addr && (addr != IPADDR_NONE)) {
-        esp_netif_dns_info_t dns;
-        dns.ip.u_addr.ip4.addr = addr;
-        dns.ip.type = ESP_IPADDR_TYPE_V4;
-        ESP_ERROR_CHECK(esp_netif_set_dns_info(netif, type, &dns));
-    }
-    return ESP_OK;
+static esp_err_t set_dns_server(esp_netif_t *netif, uint32_t addr, esp_netif_dns_type_t type) {
+	if (addr && (addr != IPADDR_NONE)) {
+		esp_netif_dns_info_t dns;
+		dns.ip.u_addr.ip4.addr = addr;
+		dns.ip.type = ESP_IPADDR_TYPE_V4;
+		ESP_ERROR_CHECK(esp_netif_set_dns_info(netif, type, &dns));
+	}
+	return ESP_OK;
 }
 
 static void setStaticIp(esp_netif_t *netif) {
@@ -203,7 +197,7 @@ static void setStaticIp(esp_netif_t *netif) {
 		return;
 	}
 
-	if (set_dns_server(netif, (uint32_t) wifiSettings.gw.addr, ESP_NETIF_DNS_MAIN) != ESP_OK)
+	if (set_dns_server(netif, (uint32_t)wifiSettings.gw.addr, ESP_NETIF_DNS_MAIN) != ESP_OK)
 		ESP_LOGE(TAG, "Failed to set dns main");
 	if (set_dns_server(netif, ipaddr_addr("8,8,8,8"), ESP_NETIF_DNS_BACKUP) != ESP_OK)
 		ESP_LOGE(TAG, "Failed to set dns backup");
@@ -559,8 +553,7 @@ void connectTask(void *pvParameters) {
 				esp_wifi_connect();
 				connectStatus = CONNECTING;
 				step = 1;
-			}
-			break;
+			} break;
 
 			default:
 				break;
@@ -572,7 +565,7 @@ void connectTask(void *pvParameters) {
 			case IP_RECEIVED:
 				if (!DNSoff)
 					initialiseMdns(userSettings.moduleName);
-
+				connectStatus = CONNECT_READY;
 				step = 30;
 				break;
 			default:
@@ -581,7 +574,7 @@ void connectTask(void *pvParameters) {
 			break;
 
 		case 30:
-			if ( connectStatus != IP_RECEIVED)
+			if (connectStatus != CONNECT_READY)
 				step = 1;
 			break;
 
@@ -594,29 +587,13 @@ void connectTask(void *pvParameters) {
 }
 
 void wifiConnect(void) {
+	if (strlen(wifiSettings.SSID) < 1) {
+		strcpy(wifiSettings.SSID, "xzxzxzxzxx");
+		strcpy(wifiSettings.pwd, "yyyyyyyy");
+	}
 	xTaskCreate(connectTask, "connectTask", configMINIMAL_STACK_SIZE * 5, NULL, 5, NULL);
 	g_pCGIs = CGIurls; // for file_server to read CGIurls
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 // /*
 // handles wifi connect process
@@ -705,10 +682,9 @@ void wifiConnect(void) {
 // wifiSettings_t wifiSettings;
 
 // #ifdef USE_OTA
-// wifiSettings_t wifiSettingsDefaults = {ESP_WIFI_SSID, ESP_WIFI_PASS, ipaddr_addr(DEFAULT_IPADDRESS), ipaddr_addr(DEFAULT_GW), " ", " ", FIRMWARE_VERSION, SPIFFS_VERSION, false};
-// #else
-// wifiSettings_t wifiSettingsDefaults = {ESP_WIFI_SSID, ESP_WIFI_PASS, ipaddr_addr(DEFAULT_IPADDRESS), ipaddr_addr(DEFAULT_GW)};
-// #endif
+// wifiSettings_t wifiSettingsDefaults = {ESP_WIFI_SSID, ESP_WIFI_PASS, ipaddr_addr(DEFAULT_IPADDRESS), ipaddr_addr(DEFAULT_GW), " ", " ",
+// FIRMWARE_VERSION, SPIFFS_VERSION, false}; #else wifiSettings_t wifiSettingsDefaults = {ESP_WIFI_SSID, ESP_WIFI_PASS,
+// ipaddr_addr(DEFAULT_IPADDRESS), ipaddr_addr(DEFAULT_GW)}; #endif
 
 // /* The examples use WiFi configuration that you can set via project configuration menu
 
@@ -762,7 +738,6 @@ void wifiConnect(void) {
 // #define CONNECTED_BIT BIT0
 // static const int ESPTOUCH_DONE_BIT = BIT2;
 // static const char *TAG = "wifiConnect";
-
 
 // int getRssi(void) {
 // 	wifi_ap_record_t ap_info;
@@ -842,9 +817,8 @@ void wifiConnect(void) {
 // 	smartconfig_start_config_t cfg = SMARTCONFIG_START_CONFIG_DEFAULT();
 // 	ESP_ERROR_CHECK(esp_smartconfig_start(&cfg));
 // 	while (1) {
-// 		uxBits = xEventGroupWaitBits(s_wifi_event_group, CONNECTED_BIT | ESPTOUCH_DONE_BIT, true, false, (SMARTCONFIGTIMEOUT * 1000) / portTICK_PERIOD_MS);
-// 		if (uxBits & CONNECTED_BIT) {
-// 			ESP_LOGI(TAG, "WiFi Connected to ap");
+// 		uxBits = xEventGroupWaitBits(s_wifi_event_group, CONNECTED_BIT | ESPTOUCH_DONE_BIT, true, false, (SMARTCONFIGTIMEOUT * 1000) /
+// portTICK_PERIOD_MS); 		if (uxBits & CONNECTED_BIT) { 			ESP_LOGI(TAG, "WiFi Connected to ap");
 // 		}
 // 		if (uxBits & ESPTOUCH_DONE_BIT) {
 // 			ESP_LOGI(TAG, "smartconfig over");
@@ -958,7 +932,6 @@ void wifiConnect(void) {
 // 				sendLogInMssg();
 // 			emailIsSend = true;
 // 			#endif
-			
 
 // 			if (enableFixedIP && (advSettings.fixedIPdigit > 0)) { // check if the last digit of IP address = CONFIG_FIXED_LAST_IP_DIGIT
 // 				uint32_t addr = event->ip_info.ip.addr;
@@ -1255,7 +1228,7 @@ void wifiConnect(void) {
 // 		case 30:
 // 			if (connectStatus != CONNECT_READY)
 // 				connectStep = 1;
-// 			#ifdef USE_OTA	
+// 			#ifdef USE_OTA
 // 			else {
 // 				updateTimer--;
 // 				if ((updateTimer <= 0) || forceUpdate) {
@@ -1285,7 +1258,7 @@ void wifiConnect(void) {
 // 			#endif
 
 // 			break;
-// 	#ifdef USE_OTA	
+// 	#ifdef USE_OTA
 // 		case 40: // update with dhcp on
 // 			switch (connectStatus) {
 // 			case CONNECTED:
@@ -1295,7 +1268,7 @@ void wifiConnect(void) {
 // 					vTaskDelay(100 / portTICK_PERIOD_MS);
 // 				} while ( !updateTaskHasFinished);
 
-// 				ESP_LOGI(TAG, "updateTask has finished"); 
+// 				ESP_LOGI(TAG, "updateTask has finished");
 // 				enableFixedIP = true;
 // 				connectStep = 1;
 // 				esp_wifi_disconnect();
@@ -1310,7 +1283,7 @@ void wifiConnect(void) {
 // 			}
 
 // 			break;
-// #endif			
+// #endif
 // 		default:
 // 			break;
 // 		}; // end switch step

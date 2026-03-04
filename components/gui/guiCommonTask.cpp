@@ -191,6 +191,9 @@ void guiCommonTask(void *pvParameter) {
 	ESP_ERROR_CHECK(esp_timer_start_periodic(periodic_timer, (LV_TICK_PERIOD_MS / portTICK_PERIOD_MS) * 1000));
 
 	setBacklight(100);
+
+	initStyles();
+	
 	displayReady = true;
 
 	while (1) {

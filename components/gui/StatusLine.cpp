@@ -11,16 +11,15 @@
 
 
 LV_FONT_DECLARE(insolata25);
+#define STATUSLINE_FONT insolata25
 
-LV_FONT_DECLARE(lv_font_montserrat_24)
-
-#define STATUSLINE_FONT lv_font_montserrat_24
-
-//#define STATUSLINE_FONT insolata25
-//#define STATUSLINE_FONT insolata25
-
-
-#include "backGround.h"
+// #ifdef LGL_SIMULATOR
+// #include "lv_drv_conf.h"
+// #define LV_HOR_RES_MAX 	SDL_HOR_RES
+// #define LV_VER_RES_MAX SDL_VER_RES
+// #else
+// 	#include "../lvgl_esp32_drivers/lvgl_helpers.h"
+// #endif
 
 static lv_style_t statusLineStyle;
 
@@ -56,22 +55,8 @@ StatusLine::StatusLine(lv_obj_t * parent) {
 	text[MAXCHARS+1]= 0;
 	lv_label_set_text(statusLine,text);
 
-    lv_obj_set_size(statusLine, LV_HOR_RES_MAX, 40);
-    lv_obj_set_pos(statusLine, 0, LV_VER_RES_MAX - 40);
-
-//	lv_obj_set_x(statusLine, 0);
-//	lv_coord_t coord =lv_obj_get_height(statusLine);
-//	lv_obj_set_y(statusLine, LV_VER_RES_MAX-coord);
-
-
-
-	//	lv_label_set_align(display, LV_LABEL_ALIGN_CENTER);       /*Center aligned lines*/
-
-	//	lv_obj_set_size(btn1, 200, 50);
-
-	//	lv_obj_set_width(display, 318);
-	//	lv_obj_align(display, NULL, LV_ALIGN_CENTER, 0,5);
-
+    lv_obj_set_size(statusLine, LV_HOR_RES, 40);
+    lv_obj_set_pos(statusLine, 0, LV_VER_RES - 40);
 }
 
 void StatusLine::setText(const char * str){
@@ -84,7 +69,12 @@ void StatusLine::setText(const char * str){
 		for ( int n = len; n<MAXCHARS;n++)
 			text[n] = ' ';
 		lv_label_set_text(statusLine,text);
+		lv_obj_clear_flag((lv_obj_t*)statusLine, LV_OBJ_FLAG_HIDDEN);
+		
 	}
+	else
+		lv_obj_add_flag((lv_obj_t*)statusLine, LV_OBJ_FLAG_HIDDEN);
+		
 }
 
 

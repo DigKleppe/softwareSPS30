@@ -22,7 +22,7 @@
 #define SPS30_ADDR 0x69
 #define CLKSPEED 100000
 
-#define LOGINTERVAL 5 // minutes
+#define LOGINTERVAL 5 // // minutes
 #define AVERAGES 30	  // number of values to average
 
 const char measLabelTxt[][10] = {{"mc 1p0"}, {"mc 2p5"}, {"mc 4p0"}, {"mc 10p0"}, {"nc 0p5"},
@@ -50,7 +50,7 @@ Averager averager[NR_MEASVALUES];
 void sensorTask(void *parameters) {
 	esp_err_t error = ESP_OK;
 	uint32_t device_status = 0;
-	displayMssg_t mssg;
+	displayMssg_t displayMssg;
 	log_t logValue;
 	int lastminute = -1;
 	time_t now = 0;
@@ -76,6 +76,7 @@ void sensorTask(void *parameters) {
 	sps30_start_measurement(SPS30_OUTPUT_FORMAT_OUTPUT_FORMAT_FLOAT);
 	vTaskDelay(1 / portTICK_PERIOD_MS);
 	uint16_t data_ready_flag = 0;
+	displayMssg.displayItem = DISPLAY_ITEM_MEASLINE;
 	// uint16_t mc_1p0 = 0;
 	// uint16_t mc_2p5 = 0;
 	// uint16_t mc_4p0 = 0;
@@ -113,9 +114,9 @@ void sensorTask(void *parameters) {
 					averager[n].write( (int) 1000.0 * values[n]);
 					avGvalues[n] =  averager[n].average()/ 1000;
 				}
-				mssg.values = &avGvalues[0];
+				displayMssg.values = &avGvalues[0];
 				if (displayMssgBox != NULL)
-					xQueueSend(displayMssgBox, &mssg, 0);
+					xQueueSend(displayMssgBox, &displayMssg, 0);
 				memcpy(lastVal.values, avGvalues, sizeof(logValue.values));
 				lastVal.timeStamp = timeStamp;
 
@@ -203,7 +204,6 @@ const CGIdesc_t sensorInfoDescriptorTable[][7] = {{{measLabelTxt[0], &lastVal.va
 
 int getSensorInfoScript(char *pBuffer, int count) {
 	int len = 0;
-	bool sensorFound = false;
 	switch (scriptState) {
 	case 0:
 		scriptState++;

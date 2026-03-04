@@ -17,7 +17,7 @@
 
 //#include "Stream.h"
 
-//#include "StatusLine.h"
+#include "StatusLine.h"
 #include "NavigArrows.h"
 #include "ClockDisplay.h"
 
@@ -29,6 +29,7 @@ public:
 	void show();
 	static const int MAXVALUECHARS = 8;
 	void update (float *values);
+	void setStatusLine (const char * text);
 
 private:
 	char  measValue1[MAXVALUECHARS+3]; // extra space for a symbol (3 characters)
@@ -36,8 +37,9 @@ private:
 	static void screenClicked(lv_event_t * event);
 	lv_obj_t * backGround;
 	lv_obj_t * screen;
-	lv_obj_t * infoLabel;
-	NavigArrows * navigArrows;
+//	lv_obj_t * infoLabel;
+//	NavigArrows * navigArrows;
+	StatusLine * statusLine;
 	static void event_handler(lv_event_t * e);
 };
 
