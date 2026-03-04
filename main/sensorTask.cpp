@@ -58,6 +58,7 @@ void sensorTask(void *parameters) {
 	int logPrescaler = 1;
 	float values[NR_MEASVALUES];
 	float avGvalues[ NR_MEASVALUES];
+	initLogBuffer(); // psRAM
 
 
 	for (int n = 0; n < NR_MEASVALUES; n++)

@@ -5,10 +5,10 @@
  *      Author: dig
  */
 #include "log.h"
+#include <esp_heap_caps.h>
+#include <math.h>
 #include <stdio.h>
 #include <string.h>
-#include <math.h>
-#include <esp_heap_caps.h>
 
 int printLog(log_t *logToPrint, char *pBuffer);
 extern int scriptState;
@@ -16,15 +16,21 @@ extern int scriptState;
 int logRxIdx;
 int logTxIdx;
 
-static log_t measLog[ MAXLOGVALUES];
+// static log_t measLog[ MAXLOGVALUES];
 
-// log_t * measLog;
+log_t *measLog;
 
-// log_t * initLogBuffer ( void) {
-// 	void *p = heap_caps_malloc( MAXLOGVALUES * sizeof ( log_t),  MALLOC_CAP_SPIRAM);
-// 	measLog = (log_t *)p;
-// 	return measLog;
-// }
+log_t *initLogBuffer(void) {
+
+#ifdef CONFIG_SPIRAM
+	void *p = heap_caps_malloc(MAXLOGVALUES * sizeof(log_t), MALLOC_CAP_SPIRAM);
+#else
+	void *p = malloc(MAXLOGVALUES * sizeof(log_t));
+#endif
+
+	measLog = (log_t *)p;
+	return measLog;
+}
 
 void addToLog(log_t logValue) {
 	measLog[logTxIdx] = logValue;
@@ -68,7 +74,7 @@ int getAllLogsScript(char *pBuffer, int count) {
 		if (logsToSend) {
 			len = 0;
 			blocks++;
-	
+
 			do {
 				len += printLog(&measLog[logRxIdx], pBuffer + len);
 				logRxIdx++;
@@ -77,8 +83,8 @@ int getAllLogsScript(char *pBuffer, int count) {
 				left = count - len;
 				logsToSend--;
 
-			} while (logsToSend && (left > (len + 50))); 
-		//	printf(" Sending block %d, logsToSend: %d  left:%d\r\n", blocks, logsToSend,  left);
+			} while (logsToSend && (left > (len + 50)));
+			//	printf(" Sending block %d, logsToSend: %d  left:%d\r\n", blocks, logsToSend,  left);
 		}
 	}
 	return len;
@@ -89,7 +95,7 @@ int getAllLogsScript(char *pBuffer, int count) {
 int getNewLogsScript(char *pBuffer, int count) {
 
 	int left, len = 0;
-	if (logRxIdx != (logTxIdx)) {  // something to send?
+	if (logRxIdx != (logTxIdx)) { // something to send?
 		do {
 			len += printLog(&measLog[logRxIdx], pBuffer + len);
 			logRxIdx++;
@@ -98,7 +104,6 @@ int getNewLogsScript(char *pBuffer, int count) {
 			left = count - len;
 
 		} while ((logRxIdx != logTxIdx) && (left > 40));
-
 	}
 	return len;
 }
@@ -107,7 +112,7 @@ int clearLogScript(char *pBuffer, int count) {
 	if (scriptState == 0) { // find oldest value in cyclic logbuffer
 		logRxIdx = 0;
 		logTxIdx = 0;
-		memset(&measLog, 0, sizeof( measLog));
+		memset(&measLog, 0, sizeof(measLog));
 		strcpy(pBuffer, "OK");
 		scriptState++;
 		return 3;

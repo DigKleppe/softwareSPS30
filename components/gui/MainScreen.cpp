@@ -57,7 +57,7 @@ MainScreen::MainScreen() {
 		//	lv_obj_set_scrollbar_mode(label, LV_SCROLLBAR_MODE_OFF);
 		lv_obj_clear_flag(label, LV_OBJ_FLAG_SCROLLABLE);
 
-		lv_label_set_text_fmt(label, measLabelTxt[line]);
+		lv_label_set_text(label, measLabelTxt[line]);
 		lv_obj_center(label);
 
 		obj = lv_obj_create(cont);
@@ -72,7 +72,7 @@ MainScreen::MainScreen() {
 		lv_obj_clear_flag(label, LV_OBJ_FLAG_SCROLLABLE);
 		valueLabel[line] = label;
 
-		lv_label_set_text_fmt(label, "--");
+		lv_label_set_text(label, "--");
 		lv_obj_center(label);
 	}
 	statusLine = new StatusLine(backGround);
@@ -100,7 +100,7 @@ void MainScreen::update(float *values) {
 		else
 			sprintf(str, "%3.2f", *values++); // typ_size
 		// lv_label_set_text_fmt(valueLabel[n],"%3.1f", *values);
-		lv_label_set_text_fmt(valueLabel[n], str);
+		lv_label_set_text(valueLabel[n], str);
 	}
 }
 

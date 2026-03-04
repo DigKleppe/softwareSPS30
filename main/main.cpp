@@ -66,11 +66,19 @@ extern "C" void app_main() {
 
 	initGui();
 
-	xTaskCreatePinnedToCore(guiCommonTask, "guicommon", 4096 * 2, NULL, 0, &guiCommonTaskh, 1);
+	// xTaskCreatePinnedToCore(guiCommonTask, "guicommon", 4096 * 2, NULL, 0, &guiCommonTaskh, 1);
+	// while (!displayReady)
+	// 	vTaskDelay(10 / portTICK_PERIOD_MS);
+
+	// xTaskCreatePinnedToCore(guiTask, "guiTask", 4096, NULL, 0, &guiTaskh, 1);
+
+	xTaskCreate(guiCommonTask, "guicommon", 4096 * 2, NULL, 0, &guiCommonTaskh);
 	while (!displayReady)
 		vTaskDelay(10 / portTICK_PERIOD_MS);
 
-	xTaskCreatePinnedToCore(guiTask, "guiTask", 4096, NULL, 0, &guiTaskh, 1);
+	xTaskCreate(guiTask, "guiTask", 4096, NULL, 0, &guiTaskh);
+
+
 	xTaskCreate(sensorTask, "sensorTask", 2 * 4096, NULL, 0, NULL);
 	
 	displayMssg.str1 = str;

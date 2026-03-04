@@ -56,7 +56,7 @@ StatusLine::StatusLine(lv_obj_t * parent) {
 	lv_label_set_text(statusLine,text);
 
     lv_obj_set_size(statusLine, LV_HOR_RES, 40);
-    lv_obj_set_pos(statusLine, 0, LV_VER_RES - 40);
+    lv_obj_set_pos(statusLine, 0, LV_VER_RES - 44);
 }
 
 void StatusLine::setText(const char * str){

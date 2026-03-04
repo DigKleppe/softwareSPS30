@@ -11,11 +11,17 @@
 #include "freertos/FreeRTOS.h"
 #endif
 
+#include <esp_heap_caps.h>
+
 Averager::Averager(uint32_t averages) {
 	bufWriteIndex = 0;
 	bufValues = 0;
 	bufSize = averages;
-	pBuffer = (int32_t*) malloc(bufSize * 4);
+#ifdef CONFIG_SPIRAM
+	pBuffer = (int32_t *)heap_caps_malloc(bufSize * 4, MALLOC_CAP_SPIRAM);
+#else
+	pBuffer = (int32_t *)malloc(bufSize * 4);
+#endif
 }
 
 void Averager::clear() {
@@ -23,13 +29,17 @@ void Averager::clear() {
 	bufValues = 0;
 }
 
-int32_t * Averager::setAverages(uint32_t averages) {
+int32_t *Averager::setAverages(uint32_t averages) {
 	if (averages > 0) {
 		bufSize = averages;
 		bufWriteIndex = 0;
 		bufValues = 0;
 		free(pBuffer);
-		pBuffer = (int32_t*) malloc(bufSize * 4);
+#ifdef CONFIG_SPIRAM
+		pBuffer = (int32_t *)heap_caps_malloc(bufSize * 4, MALLOC_CAP_SPIRAM);
+#else
+		pBuffer = (int32_t *)malloc(bufSize * 4);
+#endif
 		return pBuffer;
 	}
 	return NULL;
@@ -57,7 +67,7 @@ float Averager::average(void) {
 	highest = INT32_MIN;
 	lowest = INT32_MAX;
 
-	int32_t *p = (int32_t*) pBuffer;
+	int32_t *p = (int32_t *)pBuffer;
 	int32_t value;
 	if (bufValues > 0) {
 		for (int n = 0; n < bufValues; n++) {
@@ -71,16 +81,16 @@ float Averager::average(void) {
 		if (bufValues > 2) {
 			averageAccu -= lowest;
 			averageAccu -= highest;
-			result = (float) averageAccu / (bufValues - 2);
+			result = (float)averageAccu / (bufValues - 2);
 		} else
-			result = (float) averageAccu / bufValues;
+			result = (float)averageAccu / bufValues;
 	}
 	return result;
 }
 
 int32_t Averager::getHighest(void) {
 	highest = INT32_MIN;
-	int32_t *p = (int32_t*) pBuffer;
+	int32_t *p = (int32_t *)pBuffer;
 	int32_t value;
 	if (bufValues > 0) {
 		for (int n = 0; n < bufValues; n++) {
@@ -96,7 +106,7 @@ int32_t Averager::getHighest(void) {
 
 int32_t Averager::getLowest(void) {
 	lowest = INT32_MAX;
-	int32_t *p = (int32_t*) pBuffer;
+	int32_t *p = (int32_t *)pBuffer;
 	int32_t value;
 	if (bufValues > 0) {
 		for (int n = 0; n < bufValues; n++) {
@@ -107,4 +117,3 @@ int32_t Averager::getLowest(void) {
 	}
 	return lowest;
 }
-

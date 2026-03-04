@@ -6,8 +6,8 @@
 #include <stdio.h> // printf
 #include "driver/i2c_master.h"
 
-#define SDA_PIN 16
-#define SCL_PIN 15
+#define SDA_PIN 18
+#define SCL_PIN 19
 
 #define I2C_MASTER_SCL_IO SCL_PIN	/*!< GPIO number used for I2C master clock */
 #define I2C_MASTER_SDA_IO SDA_PIN	/*!< GPIO number used for I2C master data  */
