@@ -26,13 +26,13 @@ extern lv_style_t styleSymbol;
 //  lv_palette_main(LV_PALETTE_GREY)
 #define DEFAULTVALUECOLOR			lv_color_make(255, 255, 255)
 #define DEFAULTBORDERCOLOR			lv_color_make(0, 255, 0)
-#define DEFAULTBACKGROUNDCOLOR 		lv_color_black()
+#define DEFAULTBACKGROUNDCOLOR 		lv_palette_lighten(LV_PALETTE_GREY,1) 
 
 #define MEASFONT					cantarel25   //cantarelLight75  //dejavusansEL75  cantarel25
 #define MEASUNITFONT				cantarelLight50 // insloata60_4bppSub
 #define MEASNAMEFONT 				cantarel25  //cantarelRegular20 // lv_font_montserrat_20
 #define MEASVALUECOLOR				DEFAULTVALUECOLOR
-#define MEASVALUEBGCOLOR			DEFAULTBACKGROUNDCOLOR
+#define MEASVALUEBGCOLOR			lv_color_black()
 #define MEASNAMECOLOR				MEASVALUECOLOR
 
 #define SPINBUTTONFONT				dejavusansEL44

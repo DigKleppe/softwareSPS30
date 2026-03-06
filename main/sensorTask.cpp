@@ -20,10 +20,15 @@
 #include "wifiConnect.h"
 
 #define SPS30_ADDR 0x69
-#define CLKSPEED 100000
+#include <esp_err.h>
+#include <esp_log.h>
+
+#define CLKSPEED 50000
 
 #define LOGINTERVAL 5 // // minutes
 #define AVERAGES 30	  // number of values to average
+
+static const char *TAG = "sensorTask";
 
 const char measLabelTxt[][10] = {{"mc 1p0"}, {"mc 2p5"}, {"mc 4p0"}, {"mc 10p0"}, {"nc 0p5"},
 								 {"nc 1p0"}, {"nc 2p5"}, {"nc 4p0"}, {"nc 10p0"}, {"typ size"}};
@@ -64,12 +69,32 @@ void sensorTask(void *parameters) {
 	for (int n = 0; n < NR_MEASVALUES; n++)
 		averager[n].setAverages(AVERAGES);
 
-	SPS30AddDeviceToBus(&bus_handle);
+	do {	
+		error = i2c_master_probe(bus_handle, SPS30_ADDR, 50);
+		if ( error ) {
+			ESP_LOGE(TAG, "SPS30 sensor not detected", error);
+			vTaskDelay (1000/portTICK_PERIOD_MS);
+		}
+	} while( error);
 
+
+	error = SPS30AddDeviceToBus(&bus_handle);
+	if( error)
+		ESP_LOGE(TAG, "Failed to add SPS30 to bus", error);
+			
+			
 	sps30_stop_measurement();
 	int8_t serial_number[32] = {0};
 	int8_t product_type[8] = {0};
-	sps30_read_serial_number(serial_number, 32);
+	do  {
+		error = sps30_read_serial_number(serial_number, 32);
+		if ( error != ESP_OK) {
+			ESP_LOGE(TAG, "Failed to read serialnr %d", error);
+			vTaskDelay (1000/portTICK_PERIOD_MS);
+		}
+	} while  ( error != ESP_OK);
+
+
 	printf("serial_number: %s\n", serial_number);
 	sps30_read_product_type(product_type, 8);
 	printf("product_type: %s\n", product_type);

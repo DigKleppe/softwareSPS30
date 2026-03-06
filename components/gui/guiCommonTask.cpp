@@ -18,7 +18,7 @@
 
 #include "../zhw990217__lvgl_esp32_drivers/lvgl_tft/disp_driver.h"
 
-// #include "lvgl_helpers.h"
+#include "../zhw990217__lvgl_esp32_drivers/lvgl_helpers.h"
 
 // fonts 0x5E 0xB0 0123456789 :-.,C%
 // https://lvgl.io/tools/fontconverter

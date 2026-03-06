@@ -86,7 +86,7 @@ extern "C" void app_main() {
 	while (1) {
 		vTaskDelay(1000);
 		timeStamp++;
-
+//printf( "connectstatus: %d \n", connectStatus);
 		displayMssg.displayItem = DISPLAY_ITEM_STATUSLINE;
 		switch (connectStatus) {
 		case CONNECT_READY:

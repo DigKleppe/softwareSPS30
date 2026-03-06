@@ -32,6 +32,9 @@ esp_err_t i2c_dev_write(const i2c_dev_t *dev, const void *out_reg, size_t out_re
  * @brief i2c master initialization
  */
 esp_err_t i2c_master_bus_init(i2c_master_bus_handle_t *bus_handle) {
+
+//	gpio_reset_pin((gpio_num_t) I2C_MASTER_SDA_IO);
+//	gpio_reset_pin((gpio_num_t) I2C_MASTER_SCL_IO);
 	
 	i2c_master_bus_config_t bus_config = {
 		.i2c_port = I2C_MASTER_NUM,

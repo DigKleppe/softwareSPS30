@@ -11,7 +11,8 @@
 #include <string.h>
 
 #include "esp_log.h"
-const char *TAG = "commonscripts";
+
+static const char *TAG = "commonscripts";
 
 extern int switches;
 

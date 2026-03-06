@@ -41,7 +41,10 @@ MainScreen::MainScreen() {
 	// lv_obj_center(cont);
 	lv_obj_set_pos(cont, 0, 0);
 	lv_obj_set_layout(cont, LV_LAYOUT_GRID);
+	lv_obj_add_style(cont,&style_background,0);
+
 	lv_obj_set_scrollbar_mode(cont, LV_SCROLLBAR_MODE_OFF);
+		
 
 	lv_obj_t *label;
 	lv_obj_t *obj;
@@ -54,8 +57,6 @@ MainScreen::MainScreen() {
 		lv_obj_set_grid_cell(obj, LV_GRID_ALIGN_STRETCH, 0, 1, LV_GRID_ALIGN_STRETCH, line, 1);
 
 		label = lv_label_create(obj);
-		//	lv_obj_set_scrollbar_mode(label, LV_SCROLLBAR_MODE_OFF);
-		lv_obj_clear_flag(label, LV_OBJ_FLAG_SCROLLABLE);
 
 		lv_label_set_text(label, measLabelTxt[line]);
 		lv_obj_center(label);
@@ -68,8 +69,6 @@ MainScreen::MainScreen() {
 		// lv_obj_set_grid_cell(obj, LV_GRID_ALIGN_STRETCH, 1, 1, LV_GRID_ALIGN_STRETCH, line, 1);
 		lv_obj_set_grid_cell(obj, LV_GRID_ALIGN_START, 1, 1, LV_GRID_ALIGN_STRETCH, line, 1);
 		label = lv_label_create(obj);
-		// lv_obj_set_scrollbar_mode(label, LV_SCROLLBAR_MODE_OFF);
-		lv_obj_clear_flag(label, LV_OBJ_FLAG_SCROLLABLE);
 		valueLabel[line] = label;
 
 		lv_label_set_text(label, "--");

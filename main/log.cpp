@@ -6,9 +6,12 @@
  */
 #include "log.h"
 #include <esp_heap_caps.h>
+#include <esp_log.h>
 #include <math.h>
 #include <stdio.h>
 #include <string.h>
+#include <stdint.h>
+#include <cstdint>
 
 int printLog(log_t *logToPrint, char *pBuffer);
 extern int scriptState;
@@ -16,10 +19,11 @@ extern int scriptState;
 int logRxIdx;
 int logTxIdx;
 
+static const char *TAG = "log";
+
 // static log_t measLog[ MAXLOGVALUES];
 
 log_t *measLog;
-
 log_t *initLogBuffer(void) {
 
 #ifdef CONFIG_SPIRAM
@@ -27,12 +31,18 @@ log_t *initLogBuffer(void) {
 #else
 	void *p = malloc(MAXLOGVALUES * sizeof(log_t));
 #endif
-
 	measLog = (log_t *)p;
+	if (p == 0)
+		ESP_LOGE(TAG, "No space for Logbuffer!");
+	else {
+		memset(measLog, 0, (MAXLOGVALUES * sizeof(log_t)));
+	}
 	return measLog;
 }
 
 void addToLog(log_t logValue) {
+	if (measLog == 0)
+		return;
 	measLog[logTxIdx] = logValue;
 	measLog[logTxIdx].timeStamp = timeStamp;
 	logTxIdx++;
@@ -48,6 +58,9 @@ int getAllLogsScript(char *pBuffer, int count) {
 	static int logsToSend = 0;
 	int left, len = 0;
 	int n;
+	if (measLog == 0)
+		return 0;
+
 	if (scriptState == 0) { // find oldest value in cyclic logbuffer
 		logRxIdx = 0;
 		blocks = 0;
@@ -93,6 +106,8 @@ int getAllLogsScript(char *pBuffer, int count) {
 // these functions only work for one user!
 
 int getNewLogsScript(char *pBuffer, int count) {
+	if (measLog == 0)
+		return 0;
 
 	int left, len = 0;
 	if (logRxIdx != (logTxIdx)) { // something to send?
@@ -109,10 +124,13 @@ int getNewLogsScript(char *pBuffer, int count) {
 }
 
 int clearLogScript(char *pBuffer, int count) {
+	if (measLog == 0)
+		return 0;
+
 	if (scriptState == 0) { // find oldest value in cyclic logbuffer
 		logRxIdx = 0;
 		logTxIdx = 0;
-		memset(&measLog, 0, sizeof(measLog));
+		memset(measLog, 0, (MAXLOGVALUES * sizeof(log_t)));
 		strcpy(pBuffer, "OK");
 		scriptState++;
 		return 3;
