@@ -65,12 +65,8 @@ void guiTask(void *pvParameter) {
 				case DISPLAY_ITEM_STATUSLINE:
 					mainScreen->setStatusLine((const char *)recDdisplayMssg.str1);
 					break;
-
 				case DISPLAY_ITEM_MEASLINE:
 					mainScreen->update(recDdisplayMssg.values);
-
-					//					if ( recDdisplayMssg.line == 0)
-					//						mainScreen->setTemperatureDisplayText( (char *) recDdisplayMssg.str1 );
 					break;
 				default:
 					break;
@@ -83,5 +79,3 @@ void guiTask(void *pvParameter) {
 	}
 }
 
-// /home/dig/.espressif/tools/openocd-esp32/v0.10.0-esp32-20200420/openocd-esp32/bin/openocd -f interface/ftdi/c232hm.cfg -f
-// board/esp-wroom-32.cfg -c "program_esp /home/dig/projecten/littleVGL/dmmGui/build/dmm. 0x10000 verify"

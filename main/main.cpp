@@ -27,6 +27,8 @@ TaskHandle_t guiTaskh;
 
 static const char *TAG = "main";
 
+#define IPSHOWTIME 5 // seconds
+
 esp_err_t init_spiffs(void);
 i2c_master_bus_handle_t bus_handle;
 uint32_t timeStamp = 1; // global timestamp for logging
@@ -36,6 +38,8 @@ extern "C" void app_main() {
 	int dummy;
 	displayMssg_t displayMssg;
 	char str[20];
+	bool ipShown = false;
+	int ipShowTimer;
 
 	esp_err_t err = init_spiffs();
 	if (err != ESP_OK) {
@@ -90,7 +94,17 @@ extern "C" void app_main() {
 		displayMssg.displayItem = DISPLAY_ITEM_STATUSLINE;
 		switch (connectStatus) {
 		case CONNECT_READY:
-			str[0] = 0; // clear statusline
+			if ( !ipShown) {
+				sprintf(str, "%s", myIpAddress);
+				ipShowTimer = IPSHOWTIME;
+				ipShown = true;
+			}
+			else {
+				if ( ipShowTimer > 0)
+					ipShowTimer--;
+				else
+					str[0] = 0; // clear statusline
+			}
 			break;
 
 		case WPS_ACTIVE:
@@ -102,11 +116,11 @@ extern "C" void app_main() {
 			break;
 
 		default:
+			ipShown = false;
 			toggle = !toggle;
 			if (toggle)
 				sprintf(str, "Verbinden met:");
 			else
-				//	snprintf(str, 20, "%s", wifiSettings.SSID);
 				snprintf(str, (volatile size_t){sizeof(str)}, wifiSettings.SSID);
 			break;
 		}

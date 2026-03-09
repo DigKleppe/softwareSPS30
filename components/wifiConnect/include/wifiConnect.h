@@ -61,7 +61,7 @@ typedef enum {
 	WPS_TIMEOUT,
 	IP_RECEIVED,
 	CHECKFIRMWARE,
-	CONNECT_READY
+	CONNECT_READY,
 } connectStatus_t;
 
 extern volatile connectStatus_t connectStatus;
