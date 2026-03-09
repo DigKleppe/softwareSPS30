@@ -16,13 +16,13 @@
 const tCGI CGIurls[] = {
 	{"/cgi-bin/getLogMeasValues", (tCGIHandler_t) readCGIvalues, (CGIresponseFileHandler_t) getAllLogsScript},
 	{"/cgi-bin/getRTMeasValues", (tCGIHandler_t)readCGIvalues, (CGIresponseFileHandler_t)getRTMeasValuesScript},
-	{"/cgi-bin/getCommonInfo", (tCGIHandler_t)readCGIvalues, (CGIresponseFileHandler_t)getCommonInfoScript},
-	{"/cgi-bin/getSettings", (tCGIHandler_t)readCGIvalues, (CGIresponseFileHandler_t)getSettingsScript},
-	{"/cgi-bin/getAdvSettings", (tCGIHandler_t)readCGIvalues, (CGIresponseFileHandler_t)getAdvSettingsScript},
+	{"/cgi-bin/getSensorInfo", (tCGIHandler_t)readCGIvalues, (CGIresponseFileHandler_t)getSensorInfoScript},
 	{"/cgi-bin/clearLog", (tCGIHandler_t)readCGIvalues, (CGIresponseFileHandler_t)clearLogScript},
-	{"/cgi-bin/setUserDefaults", (tCGIHandler_t)readCGIvalues, (CGIresponseFileHandler_t)setUserDefaultsScript},
-	{"/cgi-bin/setAdvUserDefaults", (tCGIHandler_t)readCGIvalues, (CGIresponseFileHandler_t)setAdvUserDefaultsScript},
-//	{"/cgi-bin/checkUpdates", (tCGIHandler_t)readCGIvalues, (CGIresponseFileHandler_t)checkUpdatesScript},
-	{"/cgi-bin/forgetWifi", (tCGIHandler_t)readCGIvalues, (CGIresponseFileHandler_t)forgetWifiScript},
+	// {"/cgi-bin/getCommonInfo", (tCGIHandler_t)readCGIvalues, (CGIresponseFileHandler_t)getCommonInfoScript},
+	// {"/cgi-bin/getSettings", (tCGIHandler_t)readCGIvalues, (CGIresponseFileHandler_t)getSettingsScript},
+	// {"/cgi-bin/getAdvSettings", (tCGIHandler_t)readCGIvalues, (CGIresponseFileHandler_t)getAdvSettingsScript},
+	// {"/cgi-bin/setUserDefaults", (tCGIHandler_t)readCGIvalues, (CGIresponseFileHandler_t)setUserDefaultsScript},
+	// {"/cgi-bin/setAdvUserDefaults", (tCGIHandler_t)readCGIvalues, (CGIresponseFileHandler_t)setAdvUserDefaultsScript},
+	// {"/cgi-bin/forgetWifi", (tCGIHandler_t)readCGIvalues, (CGIresponseFileHandler_t)forgetWifiScript},
 	{NULL, NULL, NULL} // last
 };

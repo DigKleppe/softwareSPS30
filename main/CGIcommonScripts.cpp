@@ -5,7 +5,6 @@
 #include "softwareVersions.h"
 #include "wifiConnect.h"
 
-
 #include "esp_netif_ip_addr.h"
 
 #include <string.h>
@@ -25,28 +24,25 @@ static int rssi;
 const char firmWareVersion[] = FIRMWARE_VERSION;
 
 const CGIdesc_t writeVarDescriptorTable[] = {
-//	{"Badkamerventilatie nalooptijd (min)", &userSettings.bathRoomFanTime, INT, 1},
+	//	{"Badkamerventilatie nalooptijd (min)", &userSettings.bathRoomFanTime, INT, 1},
 	{NULL, NULL, INT, 1},
 };
 
 const CGIdesc_t advancedWriteVarDescriptorTable[] = {
-	{"Laaste IPdigit",&advSettings.fixedIPdigit, INT, 1}, 
+	{"Laaste IPdigit", &advSettings.fixedIPdigit, INT, 1},
 	{NULL, NULL, INT, 1},
 };
 
-
-const CGIdesc_t commonInfoTable[] = {
-	{"Firmwareversie", (void *)firmWareVersion, STR, 1},
-	{"RSSI", (void *)&rssi, INT, 1},
-	{"Opstarts",&systemInfo.startUps, INT, 1 },
-	// {"PingTimeouts",&systemInfo.pingTimeOuts, INT, 1 },
-	// {"PingFailed",&pingFailedCntr, INT, 1 },
-	// {"SensorTimeouts",&systemInfo.sensorTimeOuts, INT, 1 },
-	// {"ConnectRetries",&connectRetries, INT, 1 },
-	// {"Disconnects",&disconnects, INT, 1 },
-	// {"ResetOorzaak", &resetCause, INT, 1},
-	{NULL, NULL, INT, 1}
-};
+const CGIdesc_t commonInfoTable[] = {{"Firmwareversie", (void *)firmWareVersion, STR, 1},
+									 {"RSSI", (void *)&rssi, INT, 1},
+									 {"Opstarts", &systemInfo.startUps, INT, 1},
+									 // {"PingTimeouts",&systemInfo.pingTimeOuts, INT, 1 },
+									 // {"PingFailed",&pingFailedCntr, INT, 1 },
+									 // {"SensorTimeouts",&systemInfo.sensorTimeOuts, INT, 1 },
+									 // {"ConnectRetries",&connectRetries, INT, 1 },
+									 // {"Disconnects",&disconnects, INT, 1 },
+									 // {"ResetOorzaak", &resetCause, INT, 1},
+									 {NULL, NULL, INT, 0}};
 
 int getCGItable(const CGIdesc_t *descr, char *pBuffer, int count) {
 	int len = 0;
@@ -73,7 +69,7 @@ int getCGItable(const CGIdesc_t *descr, char *pBuffer, int count) {
 			break;
 		}
 		descr++;
-	} while (descr->name != NULL);
+	} while (descr->nrValues >0);
 	return len;
 }
 
@@ -107,9 +103,6 @@ int getAdvSettingsScript(char *pBuffer, int count) {
 	return 0;
 }
 
-
-
-
 int getCommonInfoScript(char *pBuffer, int count) {
 	int len = 0;
 	switch (scriptState) {
@@ -125,7 +118,6 @@ int getCommonInfoScript(char *pBuffer, int count) {
 	}
 	return 0;
 }
-
 
 int saveSettingsScript(char *pBuffer, int count) {
 	saveSettings();
@@ -147,21 +139,19 @@ int setAdvUserDefaultsScript(char *pBuffer, int count) {
 	return 0;
 }
 
-
 // int checkUpdatesScript(char *pBuffer, int count) {
 // 	forceUpdate = true;
 // 	return 0;
 // }
 
 int forgetWifiScript(char *pBuffer, int count) {
-	strcpy(wifiSettings.SSID, ESP_WIFI_SSID);  // Asus test router
+	strcpy(wifiSettings.SSID, ESP_WIFI_SSID); // Asus test router
 	strcpy(wifiSettings.pwd, ESP_WIFI_PASS);
-	wifiSettings.gw = (esp_ip4_addr_t) 0;
+	wifiSettings.gw = (esp_ip4_addr_t)0;
 	saveSettings();
 	esp_restart();
 	return 0;
 }
-
 
 void parseCGIWriteData(char *buf, int received) {
 	bool save = false;

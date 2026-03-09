@@ -1,28 +1,18 @@
 var mcData;
-var ncData;
-
-var chartRdy = false;
-var tick = 0;
-
-var chartHeigth = 500;
+var firstTime = true;
+var INFOTABLENAME = "sensorInfoTable";
 var simValue1 = 0;
 var simValue2 = 0;
-var table;
-var presc = 1;
-var simMssgCnts = 0;
 var lastTimeStamp = 0;
-var REQINTERVAL = (5 * 60); // sec
 var firstRequest = true;
-var plotTimer = 6; // every 60 seconds plot averaged value
-var rows = 0;
 
 var SECONDSPERTICK = (5 * 60);// log interval 
 var LOGDAYS = 1;
 var MAXPOINTS = (LOGDAYS * 24 * 60 * 60 / SECONDSPERTICK)
 
-var mcLabelTxt = ["mc 1p0", "mc 2p5", "mc 4p0","mc 10p0"];
+var mcLabelTxt = ["PM1", "PM2.5", "PM4", "PM10"];
 
-var NRFields = 4; // timestamp, co2, t , rh 
+var NRFields = 4;
 
 var mcOptions = {
 	title: '',
@@ -48,7 +38,7 @@ var mcOptions = {
 		1: { targetAxisIndex: 0 },
 		2: { targetAxisIndex: 0 },
 		3: { targetAxisIndex: 0 },
-		
+
 	},
 };
 
@@ -64,7 +54,7 @@ function initChart() {
 	mcChart = new google.visualization.LineChart(document.getElementById('mcChart'));
 	mcData = new google.visualization.DataTable();
 	mcData.addColumn('string', 'Time');
-	for ( var m =0 ; m < mcLabelTxt.length; m++ ) 
+	for (var m = 0; m < mcLabelTxt.length; m++)
 		mcData.addColumn('number', mcLabelTxt[m]);
 
 	if (SIMULATE) {
@@ -75,7 +65,7 @@ function initChart() {
 }
 
 function startTimer() {
-	setInterval(function () { timer() }, 1000);
+	setInterval(function () { timer() }, 10000);
 }
 
 // plots one sample ( array of 10 items)
@@ -84,7 +74,7 @@ function plot(values, timeStamp) {
 	var item;
 	mcData.addRow();
 	row = mcData.getNumberOfRows();
-	if (row > MAXPOINTS ) {
+	if (row > MAXPOINTS) {
 		mcData.removeRows(0, 1);
 		row--;
 	}
@@ -92,15 +82,15 @@ function plot(values, timeStamp) {
 	var labelText = date.getHours() + ":" + date.getMinutes() + ":" + date.getSeconds();
 	row--;
 
-	mcData.setValue(row , 0, labelText);
+	mcData.setValue(row, 0, labelText);
 	item = 1; // item 0 is timestamp
-	for ( var m =0 ; m < mcLabelTxt.length; m++ ) {  // plot 4 values in mcChart
+	for (var m = 0; m < mcLabelTxt.length; m++) {  // plot 4 values in mcChart
 		var value = parseFloat(values[item]);
 		mcData.setValue(row, item, value);
 		item++;
 	}
 }
-    
+
 function plotLog(str) {
 	var arr;
 	var timeOffset;
@@ -108,19 +98,19 @@ function plotLog(str) {
 	var measTimeLastSample;
 	var arr2 = str.split("\n");
 
-	var nrPoints = arr2.length - 1;  
+	var nrPoints = arr2.length - 1;
 	if (nrPoints > 0) {
-		var arr = arr2[nrPoints - 1].split(",");   
+		var arr = arr2[nrPoints - 1].split(",");
 		measTimeLastSample = arr[0];
-			
+
 		var sec = Date.now();//  / 1000;  // mseconds since 1-1-1970 
 		timeOffset = sec - parseFloat(measTimeLastSample) * 1000;
 
 		for (var p = 0; p < nrPoints; p++) {
-			arr = arr2[p].split(",");   
+			arr = arr2[p].split(",");
 			if (arr.length >= NRFields) {
 				sampleTime = parseFloat(arr[0]) * 1000 + timeOffset;
-				plot( arr, sampleTime);
+				plot(arr, sampleTime);
 			}
 		}
 		mcChart.draw(mcData, mcOptions);
@@ -158,6 +148,9 @@ function timer() {
 		}
 		else
 			console.log("getRTMeasValues failed");
+
+		getInfo("getSensorInfo", INFOTABLENAME, firstTime);
+		firstTime = false;
 	}
 }
 

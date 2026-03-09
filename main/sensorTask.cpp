@@ -30,8 +30,7 @@
 
 static const char *TAG = "sensorTask";
 
-const char measLabelTxt[][10] = {{"mc 1p0"}, {"mc 2p5"}, {"mc 4p0"}, {"mc 10p0"}, {"nc 0p5"},
-								 {"nc 1p0"}, {"nc 2p5"}, {"nc 4p0"}, {"nc 10p0"}, {"typ size"}};
+const char measLabelTxt[][20] = {{"PM1 µg/m³"}, {"PM2.5 µg/m³"}, {"PM4 µg/m³"}, {"PM10 µg/m³"},{"typ grootte µm"}};
 
 extern i2c_master_dev_handle_t SPS30_dev_handle;
 extern int scriptState;
@@ -48,8 +47,6 @@ esp_err_t SPS30AddDeviceToBus(i2c_master_bus_handle_t *bus_handle) {
 	return i2c_master_bus_add_device(*bus_handle, &dev_config, &SPS30_dev_handle);
 }
 
-
-
 Averager averager[NR_MEASVALUES];
 
 void sensorTask(void *parameters) {
@@ -62,38 +59,34 @@ void sensorTask(void *parameters) {
 	struct tm timeinfo;
 	int logPrescaler = 1;
 	float values[NR_MEASVALUES];
-	float avGvalues[ NR_MEASVALUES];
+	float avGvalues[NR_MEASVALUES];
 	initLogBuffer(); // psRAM
-
 
 	for (int n = 0; n < NR_MEASVALUES; n++)
 		averager[n].setAverages(AVERAGES);
 
-	do {	
+	do {
 		error = i2c_master_probe(bus_handle, SPS30_ADDR, 50);
-		if ( error ) {
+		if (error) {
 			ESP_LOGE(TAG, "SPS30 sensor not detected", error);
-			vTaskDelay (1000/portTICK_PERIOD_MS);
+			vTaskDelay(1000 / portTICK_PERIOD_MS);
 		}
-	} while( error);
-
+	} while (error);
 
 	error = SPS30AddDeviceToBus(&bus_handle);
-	if( error)
+	if (error)
 		ESP_LOGE(TAG, "Failed to add SPS30 to bus", error);
-			
-			
+
 	sps30_stop_measurement();
 	int8_t serial_number[32] = {0};
 	int8_t product_type[8] = {0};
-	do  {
+	do {
 		error = sps30_read_serial_number(serial_number, 32);
-		if ( error != ESP_OK) {
+		if (error != ESP_OK) {
 			ESP_LOGE(TAG, "Failed to read serialnr %d", error);
-			vTaskDelay (1000/portTICK_PERIOD_MS);
+			vTaskDelay(1000 / portTICK_PERIOD_MS);
 		}
-	} while  ( error != ESP_OK);
-
+	} while (error != ESP_OK);
 
 	printf("serial_number: %s\n", serial_number);
 	sps30_read_product_type(product_type, 8);
@@ -136,12 +129,12 @@ void sensorTask(void *parameters) {
 				printf("error executing read_measurement_values_uint16(): %i\n", error);
 				continue;
 			} else {
-				for ( int n = 0; n < NR_MEASVALUES -1;n++) {  // average mc's
-					averager[n].write( (int) 1000.0 * values[n]);
-					avGvalues[n] =  averager[n].average()/ 1000;
+				for (int n = 0; n < NR_MEASVALUES - 1; n++) { // average mc's
+					averager[n].write((int)1000.0 * values[n]);
+					avGvalues[n] = averager[n].average() / 1000;
 				}
-				averager[NR_MEASVALUES-1].write( (int) 1000.0 * values[9]);  // add typ. partical size to display and log
-				avGvalues[NR_MEASVALUES-1] =  averager[NR_MEASVALUES-1].average()/ 1000;
+				averager[NR_MEASVALUES - 1].write((int)1000.0 * values[9]); // add typ. partical size to display and log
+				avGvalues[NR_MEASVALUES - 1] = averager[NR_MEASVALUES - 1].average() / 1000;
 
 				displayMssg.values = &avGvalues[0];
 				if (displayMssgBox != NULL)
@@ -225,23 +218,26 @@ int getRTMeasValuesScript(char *pBuffer, int count) {
 	}
 	return 0;
 }
-// not used 
+// not used
 
-const CGIdesc_t sensorInfoDescriptorTable[][7] = {{{measLabelTxt[0], &lastVal.values[0], FLT, 1},
-												   {measLabelTxt[1], &lastVal.values[1], FLT, 1},
-												   {measLabelTxt[2], &lastVal.values[2], FLT, 1},
-												   {NULL, NULL, INT, 1}}};
+const CGIdesc_t sensorInfoDescriptorTable[] = {{measLabelTxt[0], &lastVal.values[0], FLT, 1},
+												{measLabelTxt[1], &lastVal.values[1], FLT, 1},
+												{measLabelTxt[2], &lastVal.values[2], FLT, 1},
+												{measLabelTxt[3], &lastVal.values[3], FLT, 1},
+												{measLabelTxt[4], &lastVal.values[4], FLT, 1},
+												{NULL, NULL, INT, 0}
+											};
 
 int getSensorInfoScript(char *pBuffer, int count) {
 	int len = 0;
+
 	switch (scriptState) {
 	case 0:
 		scriptState++;
-		len = sprintf(pBuffer, "Parameter, Waarde\n");
-		for (int n = 0; n < 3; n++) {
-			len += getCGItable(sensorInfoDescriptorTable[n], pBuffer + len, count);
-		}
+		len = sprintf(pBuffer, "Partikel, Waarde\n");
+		len += getCGItable(sensorInfoDescriptorTable, pBuffer + len, count);
 		return len;
+		break;
 	default:
 		break;
 	}
