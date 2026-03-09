@@ -1,7 +1,7 @@
 
 #include "log.h"
 
-#define NR_MEASVALUES 10
+#define NR_MEASVALUES 5 // only mass concetration and typ.size
 
 void sensorTask(void *parameters);
 #define _ERRORVALUE         9999 

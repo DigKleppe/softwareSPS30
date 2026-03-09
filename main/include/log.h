@@ -15,7 +15,7 @@
 #define MAXLOGVALUES (24 * 60 / 5) // 24 hours, 5 minutes interval`
 typedef struct {
 	unsigned long timeStamp;
-	float values[10];
+	float values[5];
 } log_t;
 
 log_t * initLogBuffer ( void); // in psRAM

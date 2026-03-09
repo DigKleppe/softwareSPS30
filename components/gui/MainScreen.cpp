@@ -16,12 +16,16 @@
 
 #define LINEHEIGHT 35
 
-const char measLabelTxt[][10] = {{"mc 1p0"}, {"mc 2p5"}, {"mc 4p0"}, {"mc 10p0"}, {"nc 0p5"},
-								 {"nc 1p0"}, {"nc 2p5"}, {"nc 4p0"}, {"nc 10p0"}, {"typ size"}};
+// const char measLabelTxt[][10] = {{"mc 1p0"}, {"mc 2p5"}, {"mc 4p0"}, {"mc 10p0"}, {"nc 0p5"},
+// 								 {"nc 1p0"}, {"nc 2p5"}, {"nc 4p0"}, {"nc 10p0"}, {"typ size"}};
+//static lv_coord_t column_dsc[] = {140, 60, LV_GRID_TEMPLATE_LAST}; /* 2 columns with 100- and 400-px width */
+//static lv_coord_t row_dsc[] = {LINEHEIGHT, LINEHEIGHT, LINEHEIGHT, LINEHEIGHT, LINEHEIGHT, LINEHEIGHT,
+//							   LINEHEIGHT, LINEHEIGHT, LINEHEIGHT, LINEHEIGHT, LV_GRID_TEMPLATE_LAST};
 
-static lv_coord_t column_dsc[] = {140, 60, LV_GRID_TEMPLATE_LAST}; /* 2 columns with 100- and 400-px width */
-static lv_coord_t row_dsc[] = {LINEHEIGHT, LINEHEIGHT, LINEHEIGHT, LINEHEIGHT, LINEHEIGHT, LINEHEIGHT,
-							   LINEHEIGHT, LINEHEIGHT, LINEHEIGHT, LINEHEIGHT, LV_GRID_TEMPLATE_LAST};
+const char measLabelTxt[][10] = {{"mc 1p0"}, {"mc 2p5"}, {"mc 4p0"}, {"mc 10p0"}, {"typ size"}};
+static lv_coord_t column_dsc[] = {140, 60, LV_GRID_TEMPLATE_LAST}; 
+static lv_coord_t row_dsc[] = {LINEHEIGHT, LINEHEIGHT, LINEHEIGHT, LINEHEIGHT, LINEHEIGHT, LV_GRID_TEMPLATE_LAST};
+
 
 #define NR_VALUES ((sizeof(row_dsc) / sizeof(lv_coord_t)) - 1)
 

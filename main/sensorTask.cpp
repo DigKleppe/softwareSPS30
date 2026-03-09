@@ -136,10 +136,13 @@ void sensorTask(void *parameters) {
 				printf("error executing read_measurement_values_uint16(): %i\n", error);
 				continue;
 			} else {
-				for ( int n = 0; n < NR_MEASVALUES;n++) {
+				for ( int n = 0; n < NR_MEASVALUES -1;n++) {  // average mc's
 					averager[n].write( (int) 1000.0 * values[n]);
 					avGvalues[n] =  averager[n].average()/ 1000;
 				}
+				averager[NR_MEASVALUES-1].write( (int) 1000.0 * values[9]);  // add typ. partical size to display and log
+				avGvalues[NR_MEASVALUES-1] =  averager[NR_MEASVALUES-1].average()/ 1000;
+
 				displayMssg.values = &avGvalues[0];
 				if (displayMssgBox != NULL)
 					xQueueSend(displayMssgBox, &displayMssg, 0);
@@ -222,6 +225,7 @@ int getRTMeasValuesScript(char *pBuffer, int count) {
 	}
 	return 0;
 }
+// not used 
 
 const CGIdesc_t sensorInfoDescriptorTable[][7] = {{{measLabelTxt[0], &lastVal.values[0], FLT, 1},
 												   {measLabelTxt[1], &lastVal.values[1], FLT, 1},

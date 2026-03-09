@@ -73,7 +73,6 @@ extern "C" void app_main() {
 	// xTaskCreatePinnedToCore(guiCommonTask, "guicommon", 4096 * 2, NULL, 0, &guiCommonTaskh, 1);
 	// while (!displayReady)
 	// 	vTaskDelay(10 / portTICK_PERIOD_MS);
-
 	// xTaskCreatePinnedToCore(guiTask, "guiTask", 4096, NULL, 0, &guiTaskh, 1);
 
 	xTaskCreate(guiCommonTask, "guicommon", 4096 * 2, NULL, 0, &guiCommonTaskh);
@@ -82,7 +81,6 @@ extern "C" void app_main() {
 
 	xTaskCreate(guiTask, "guiTask", 4096, NULL, 0, &guiTaskh);
 
-
 	xTaskCreate(sensorTask, "sensorTask", 2 * 4096, NULL, 0, NULL);
 	
 	displayMssg.str1 = str;
@@ -90,7 +88,6 @@ extern "C" void app_main() {
 	while (1) {
 		vTaskDelay(1000);
 		timeStamp++;
-//printf( "connectstatus: %d \n", connectStatus);
 		displayMssg.displayItem = DISPLAY_ITEM_STATUSLINE;
 		switch (connectStatus) {
 		case CONNECT_READY:

@@ -21,8 +21,6 @@ var LOGDAYS = 1;
 var MAXPOINTS = (LOGDAYS * 24 * 60 * 60 / SECONDSPERTICK)
 
 var mcLabelTxt = ["mc 1p0", "mc 2p5", "mc 4p0","mc 10p0"];
-var ncLabelTxt = ["nc 0p5", "nc 1p0", "nc 2p5", "nc 4p0","nc 10p0"];
-
 
 var NRFields = 4; // timestamp, co2, t , rh 
 
@@ -54,36 +52,6 @@ var mcOptions = {
 	},
 };
 
-var ncOptions = {
-	title: '',
-	curveType: 'function',
-	legend: { position: 'top' },
-	heigth: 200,
-	crosshair: { trigger: 'both' },	// Display crosshairs on focus and selection.
-	explorer: {
-		actions: ['dragToZoom', 'rightClickToReset'],
-		//actions: ['dragToPan', 'rightClickToReset'],
-		axis: 'horizontal',
-		keepInBounds: true,
-		maxZoomIn: 100.0
-	},
-	chartArea: { 'width': '90%', 'height': '80%' },
-
-	vAxes: {
-		0: { logScale: false },
-		1: { logScale: false },
-	},
-	series: {
-		0: { targetAxisIndex: 0 },
-		1: { targetAxisIndex: 0 },
-		2: { targetAxisIndex: 0 },
-		3: { targetAxisIndex: 0 },
-		4: { targetAxisIndex: 0 },
-	},
-};
-
-
-
 function clear() {
 	mcData.removeRows(0, mcData.getNumberOfRows());
 	mcChart.draw(mcData, mcOptions);
@@ -99,19 +67,11 @@ function initChart() {
 	for ( var m =0 ; m < mcLabelTxt.length; m++ ) 
 		mcData.addColumn('number', mcLabelTxt[m]);
 
-	ncChart = new google.visualization.LineChart(document.getElementById('ncChart'));
-	ncData = new google.visualization.DataTable();
-	ncData.addColumn('string', 'Time');
-	for ( var m =0 ; m < ncLabelTxt.length; m++ ) 
-		ncData.addColumn('number', ncLabelTxt[m]);
-
 	if (SIMULATE) {
 		simplot();
-	//	plotTest();
 	}
 	//SIMULATE = true;	
 	startTimer();
-
 }
 
 function startTimer() {
@@ -123,11 +83,9 @@ function plot(values, timeStamp) {
 	var row;
 	var item;
 	mcData.addRow();
-	ncData.addRow();
 	row = mcData.getNumberOfRows();
 	if (row > MAXPOINTS ) {
 		mcData.removeRows(0, 1);
-		ncData.removeRows(0,1); 
 		row--;
 	}
 	var date = new Date(timeStamp);
@@ -135,21 +93,12 @@ function plot(values, timeStamp) {
 	row--;
 
 	mcData.setValue(row , 0, labelText);
-	ncData.setValue(row , 0, labelText);
 	item = 1; // item 0 is timestamp
 	for ( var m =0 ; m < mcLabelTxt.length; m++ ) {  // plot 4 values in mcChart
 		var value = parseFloat(values[item]);
 		mcData.setValue(row, item, value);
 		item++;
 	}
-	var col = 1;
-	for ( var m =0 ; m < ncLabelTxt.length; m++ ) {  // plot 5 values in ncChart
-		var value = parseFloat(values[item]);
-		ncData.setValue(row, col, value);
-		item++;
-		col++;
-	}
-	
 }
     
 function plotLog(str) {
@@ -175,16 +124,10 @@ function plotLog(str) {
 			}
 		}
 		mcChart.draw(mcData, mcOptions);
-		ncChart.draw(ncData, ncOptions);
 	}
 }
 
 function simplot() {
-	var str = "S0,1,460,21.1,30  S1,1,460,21.1,30 S2,1,560,25.1,65 S3,1,660,8,70 S4,1,460,21.1,99, 450, 2000\n";
-	str += "S0,1,460,21.9,32 S1,2,470,21.5,35 S2,1,570,26.1,65 S3,1,670,9,72 S4,1,460,21.1,99, 500, 2200\n";
-	str += "S0,1,460,29.1,70 S1,3,480,21.7,40 S2,1,590,25.1,60 S3,1,680,10,65 S4,1,460,21.1,110, 600, 3000\n";
-	plotLog(str);
-
 }
 
 function timer() {
@@ -198,7 +141,6 @@ function timer() {
 		if (firstRequest) {
 			arr = getItem("getLogMeasValues");
 			mcData.removeRows(0, mcData.getNumberOfRows());
-			ncData.removeRows(0, ncData.getNumberOfRows());
 			plotLog(arr);
 			firstRequest = false;
 		}
@@ -220,9 +162,7 @@ function timer() {
 }
 
 function clearChart() {
-	ncData.removeRows(0, ncData.getNumberOfRows());
 	mcData.removeRows(0, mcData.getNumberOfRows());
-	ncChart.draw(ncData, ncOptions);
 	mcChart.draw(mcData, mcOptions);
 }
 
@@ -232,7 +172,6 @@ function clearLog() {
 }
 
 function refreshChart() {
-	ncData.removeRows(0, ncData.getNumberOfRows());
 	mcData.removeRows(0, mcData.getNumberOfRows());
 	arr = getItem("getLogMeasValues");
 	plotArray(arr);
