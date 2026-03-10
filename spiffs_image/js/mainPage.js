@@ -61,6 +61,7 @@ function initChart() {
 		simplot();
 	}
 	//SIMULATE = true;	
+	timer();
 	startTimer();
 }
 

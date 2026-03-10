@@ -27,7 +27,7 @@ TaskHandle_t guiTaskh;
 
 static const char *TAG = "main";
 
-#define IPSHOWTIME 5 // seconds
+#define IPSHOWTIME 60 // seconds
 
 esp_err_t init_spiffs(void);
 i2c_master_bus_handle_t bus_handle;
