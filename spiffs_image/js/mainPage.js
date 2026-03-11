@@ -1,9 +1,13 @@
-var mcData;
+var dayData;
+var hourData;
 var firstTime = true;
 var INFOTABLENAME = "sensorInfoTable";
+var REQUESTINTERVAL = 1;  // sec
+var DAYLOGINTERVAL = (5 * 60); // min
 var simValue1 = 0;
 var simValue2 = 0;
 var lastTimeStamp = 0;
+var dayLogPrescaler = 1;
 var firstRequest = true;
 
 var SECONDSPERTICK = (5 * 60);// log interval 
@@ -11,6 +15,8 @@ var LOGDAYS = 1;
 var MAXPOINTS = (LOGDAYS * 24 * 60 * 60 / SECONDSPERTICK)
 
 var mcLabelTxt = ["PM1", "PM2.5", "PM4", "PM10"];
+var averagedValues = [0, 0, 0, 0];
+var nrAverages = 0;
 
 var NRFields = 4;
 
@@ -43,19 +49,26 @@ var mcOptions = {
 };
 
 function clear() {
-	mcData.removeRows(0, mcData.getNumberOfRows());
-	mcChart.draw(mcData, mcOptions);
+	dayData.removeRows(0, dayData.getNumberOfRows());
+	mcChart.draw(dayData, mcOptions);
 }
 
 //var formatter_time= new google.visualization.DateFormat({formatType: 'long'});
 // channel 1 .. 5
 
 function initChart() {
-	mcChart = new google.visualization.LineChart(document.getElementById('mcChart'));
-	mcData = new google.visualization.DataTable();
-	mcData.addColumn('string', 'Time');
+	dayChart = new google.visualization.LineChart(document.getElementById('dayChart'));
+	dayData = new google.visualization.DataTable();
+	dayData.addColumn('string', 'Time');
 	for (var m = 0; m < mcLabelTxt.length; m++)
-		mcData.addColumn('number', mcLabelTxt[m]);
+		dayData.addColumn('number', mcLabelTxt[m]);
+
+	hourChart = new google.visualization.LineChart(document.getElementById('hourChart'));
+	hourData = new google.visualization.DataTable();
+	hourData.addColumn('string', 'Time');
+	for (var m = 0; m < mcLabelTxt.length; m++)
+		hourData.addColumn('number', mcLabelTxt[m]);
+
 
 	if (SIMULATE) {
 		simplot();
@@ -66,33 +79,33 @@ function initChart() {
 }
 
 function startTimer() {
-	setInterval(function () { timer() }, 10000);
+	setInterval(function () { timer() }, REQUESTINTERVAL * 1000);
 }
 
 // plots one sample ( array of 10 items)
-function plot(values, timeStamp) {
+function plot(chartData, values, timeStamp) {
 	var row;
 	var item;
-	mcData.addRow();
-	row = mcData.getNumberOfRows();
+	chartData.addRow();
+	row = chartData.getNumberOfRows();
 	if (row > MAXPOINTS) {
-		mcData.removeRows(0, 1);
+		chartData.removeRows(0, 1);
 		row--;
 	}
 	var date = new Date(timeStamp);
 	var labelText = date.getHours() + ":" + date.getMinutes() + ":" + date.getSeconds();
 	row--;
 
-	mcData.setValue(row, 0, labelText);
+	chartData.setValue(row, 0, labelText);
 	item = 1; // item 0 is timestamp
 	for (var m = 0; m < mcLabelTxt.length; m++) {  // plot 4 values in mcChart
 		var value = parseFloat(values[item]);
-		mcData.setValue(row, item, value);
+		chartData.setValue(row, item, value);
 		item++;
 	}
 }
 
-function plotLog(str) {
+function plotLog(chart, chartData, str) {
 	var arr;
 	var timeOffset;
 	var sampleTime;
@@ -111,10 +124,10 @@ function plotLog(str) {
 			arr = arr2[p].split(",");
 			if (arr.length >= NRFields) {
 				sampleTime = parseFloat(arr[0]) * 1000 + timeOffset;
-				plot(arr, sampleTime);
+				plot(chartData, arr, sampleTime);
 			}
 		}
-		mcChart.draw(mcData, mcOptions);
+		chart.draw(chartData, mcOptions);
 	}
 }
 
@@ -130,19 +143,38 @@ function timer() {
 	}
 	else {
 		if (firstRequest) {
-			arr = getItem("getLogMeasValues");
-			mcData.removeRows(0, mcData.getNumberOfRows());
-			plotLog(arr);
+			arr = getItem("getDayLogMeasValues");
+			dayData.removeRows(0, dayData.getNumberOfRows());
+			plotLog(dayChart, dayData, arr);
+			arr = getItem("getHourLogMeasValues");
+			hourData.removeRows(0, hourData.getNumberOfRows());
+			plotLog(hourChart, hourData, arr);
 			firstRequest = false;
 		}
-		str = getItem("getRTMeasValues"); // request data from enabled sensors
+		str = getItem("getRTMeasValues");
 		if (str) {
 			arr = str.split(",");
 			if (arr.length >= 3) {
 				if (arr[1] > 0) {
 					if (arr[1] != lastTimeStamp) {
 						lastTimeStamp = arr[1];
-						plotLog(str);
+						plotLog(hourChart, hourData, str);
+// average values for dayLog
+						var values = str.split(",");
+						for (var m = 0; m < mcLabelTxt.length; m++) {  
+							averagedValues[m] += parseFloat(values[m+1]); // values[0] is timestamp
+						}
+						nrAverages++;
+
+						dayLogPrescaler--;
+						if (dayLogPrescaler = 0) {
+							dayLogPrescaler = DAYLOGINTERVAL / REQUESTINTERVAL;
+							for (var m = 0; m < mcLabelTxt.length; m++) {  
+								arr[m+2] = averagedValues[m] / nrAverages;  // arr[1] is timestamp. leave unchanged
+							}
+							nrAverages = 0;
+							plotLog(dayChart, dayData, arr);
+						}
 					}
 				}
 			}
@@ -156,8 +188,8 @@ function timer() {
 }
 
 function clearChart() {
-	mcData.removeRows(0, mcData.getNumberOfRows());
-	mcChart.draw(mcData, mcOptions);
+	dayData.removeRows(0, dayData.getNumberOfRows());
+	mcChart.draw(dayData, mcOptions);
 }
 
 function clearLog() {
@@ -166,7 +198,7 @@ function clearLog() {
 }
 
 function refreshChart() {
-	mcData.removeRows(0, mcData.getNumberOfRows());
+	dayData.removeRows(0, dayData.getNumberOfRows());
 	arr = getItem("getLogMeasValues");
 	plotArray(arr);
 }

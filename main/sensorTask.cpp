@@ -13,11 +13,12 @@
 #include "CGIcommonScripts.h"
 #include "averager.h"
 #include "cgiScripts.h"
-#include "log.h"
 #include "sensorTask.h"
 // #include "settings.h"
 // #include "udpServer.h"
 #include "wifiConnect.h"
+
+#include "time.h"
 
 #define SPS30_ADDR 0x69
 #include <esp_err.h>
@@ -25,15 +26,19 @@
 
 #define CLKSPEED 50000
 
-#define LOGINTERVAL 5 // // minutes
-#define AVERAGES 30	  // number of values to average
+#define DAYLOGINTERVAL 1  //5   // minutes
+#define HOURLOGINTERVAL 2 //10 // seconds
+
+#define AVERAGES1 10								  // number of values to average first
+#define AVERAGES2 ((DAYLOGINTERVAL * 60) / AVERAGES1) // number of values to average secondary for daylog
 
 static const char *TAG = "sensorTask";
 
-const char measLabelTxt[][20] = {{"PM1 µg/m³"}, {"PM2.5 µg/m³"}, {"PM4 µg/m³"}, {"PM10 µg/m³"},{"typ grootte µm"}};
+const char measLabelTxt[][20] = {{"PM1 µg/m³"}, {"PM2.5 µg/m³"}, {"PM4 µg/m³"}, {"PM10 µg/m³"}, {"typ grootte µm"}};
 
 extern i2c_master_dev_handle_t SPS30_dev_handle;
 extern int scriptState;
+extern uint32_t timeStamp;
 
 log_t lastVal;
 
@@ -47,23 +52,34 @@ esp_err_t SPS30AddDeviceToBus(i2c_master_bus_handle_t *bus_handle) {
 	return i2c_master_bus_add_device(*bus_handle, &dev_config, &SPS30_dev_handle);
 }
 
-Averager averager[NR_MEASVALUES];
+Averager averager1[NR_MEASVALUES];
+Averager averager2[NR_MEASVALUES];
+
+Log hourLog(3600 / HOURLOGINTERVAL, sizeof(log_t));	   // 10 sec interval
+Log dayLog((24 * 60) / DAYLOGINTERVAL, sizeof(log_t)); // 5 min interval
+
+
+// Log hourLog(5 ,sizeof(log_t));	   // 10 sec interval
+//  Log dayLog(15, sizeof(log_t)); // 5 min interval
 
 void sensorTask(void *parameters) {
 	esp_err_t error = ESP_OK;
 	uint32_t device_status = 0;
 	displayMssg_t displayMssg;
 	log_t logValue;
-	int lastminute = -1;
+	int lastMinute = -1;
+	int lastSecond = -1;
 	time_t now = 0;
 	struct tm timeinfo;
-	int logPrescaler = 1;
+	int logDayPrescaler = 1;
+	int logHourPrescaler = 1;
 	float values[NR_MEASVALUES];
 	float avGvalues[NR_MEASVALUES];
-	initLogBuffer(); // psRAM
 
-	for (int n = 0; n < NR_MEASVALUES; n++)
-		averager[n].setAverages(AVERAGES);
+	for (int n = 0; n < NR_MEASVALUES; n++) {
+		averager1[n].setAverages(AVERAGES1);
+		averager2[n].setAverages(AVERAGES2);
+	}
 
 	do {
 		error = i2c_master_probe(bus_handle, SPS30_ADDR, 50);
@@ -88,9 +104,10 @@ void sensorTask(void *parameters) {
 		}
 	} while (error != ESP_OK);
 
-	printf("serial_number: %s\n", serial_number);
+	ESP_LOGI(TAG, "SPS 30 serial_number: %s\n", serial_number);
 	sps30_read_product_type(product_type, 8);
-	printf("product_type: %s\n", product_type);
+	ESP_LOGI(TAG, "SPS 30 product_type: %s\n", product_type);
+
 	//	sps30_start_measurement((sps30_output_format)(1280));
 	sps30_start_measurement(SPS30_OUTPUT_FORMAT_OUTPUT_FORMAT_FLOAT);
 	vTaskDelay(1 / portTICK_PERIOD_MS);
@@ -130,71 +147,94 @@ void sensorTask(void *parameters) {
 				continue;
 			} else {
 				for (int n = 0; n < NR_MEASVALUES - 1; n++) { // average mc's
-					averager[n].write((int)1000.0 * values[n]);
-					avGvalues[n] = averager[n].average() / 1000;
+					averager1[n].write((int)1000.0 * values[n]);
+					avGvalues[n] = averager1[n].average() / 1000;
 				}
-				averager[NR_MEASVALUES - 1].write((int)1000.0 * values[9]); // add typ. partical size to display and log
-				avGvalues[NR_MEASVALUES - 1] = averager[NR_MEASVALUES - 1].average() / 1000;
+				averager1[NR_MEASVALUES - 1].write((int)1000.0 * values[9]); // add typ. partical size to display and log
+				avGvalues[NR_MEASVALUES - 1] = averager1[NR_MEASVALUES - 1].average() / 1000;
 
 				displayMssg.values = &avGvalues[0];
 				if (displayMssgBox != NULL)
 					xQueueSend(displayMssgBox, &displayMssg, 0);
 				memcpy(lastVal.values, avGvalues, sizeof(logValue.values));
 				lastVal.timeStamp = timeStamp;
-
-				time(&now);
-				localtime_r(&now, &timeinfo);
-				if (lastminute == -1) {
-					lastminute = timeinfo.tm_min;
-				}
-				if (lastminute != timeinfo.tm_min) {
-					lastminute = timeinfo.tm_min; // every minute
-
-					if (logPrescaler > 0) {
-						logPrescaler--;
-					} else {
-						logPrescaler = LOGINTERVAL; // reset prescaler
-						memcpy(logValue.values, avGvalues, sizeof(logValue.values));
-						addToLog(logValue);
-					}
-				}
 			}
 
-			// printf("mc_1p0: %u ", mc_1p0);
-			// printf("mc_2p5: %u ", mc_2p5);
-			// printf("mc_4p0: %u ", mc_4p0);
-			// printf("mc_10p0: %u ", mc_10p0);
-			// printf("nc_0p5: %u ", nc_0p5);
-			// printf("nc_1p0: %u ", nc_1p0);
-			// printf("nc_2p5: %u ", nc_2p5);
-			// printf("nc_4p0: %u ", nc_4p0);
-			// printf("nc_10p0: %u ", nc_10p0);
-			// printf("typical_particle_size: %u\n", typical_particle_size);
-		}
+			time(&now);
+			localtime_r(&now, &timeinfo);
+			if (lastMinute == -1) {
+				lastMinute = timeinfo.tm_min;
+				lastSecond = timeinfo.tm_sec;
+			}
+			if (lastSecond != timeinfo.tm_sec) {
+				lastSecond = timeinfo.tm_sec; // every second
 
-		error = sps30_read_device_status_register(&device_status);
-		if (error != NO_ERROR)
-			printf("Error reading device status\n");
-		// else {
-		// 	if (device_status && (1 << 4))
-		// 		printf("Error fan\n");
-		// 	if (device_status && (1 << 5))
-		// 		printf("Error laser\n");
-		// 	if (device_status && (1 << 21))
-		// 		printf("Error speed\n");
-		// }
+				if (logHourPrescaler > 0)
+					logHourPrescaler--;
+				else {
+					logHourPrescaler = HOURLOGINTERVAL;
+
+					for (int n = 0; n < NR_MEASVALUES - 1; n++) {
+						avGvalues[n] = averager1[n].average();
+						averager2[n].write(avGvalues[n]); // second order for daylog
+					}
+
+					for (int n = 0; n < NR_MEASVALUES - 1; n++) {	  // average mc's
+						avGvalues[n] = averager1[n].average() / 1000; // contains last samples
+					}
+					memcpy(logValue.values, avGvalues, sizeof(logValue.values));
+					logValue.timeStamp = timeStamp;
+			timeStamp++;
+					for ( int n = 0;n< 100;n++) {
+						logValue.timeStamp = timeStamp++;
+						hourLog.add(&logValue);
+						dayLog.add(&logValue);
+					}
+				}
+
+				if (lastMinute != timeinfo.tm_min) {
+					lastMinute = timeinfo.tm_min; // every minute
+
+					if (logDayPrescaler > 0) {
+						logDayPrescaler--;
+					} else {
+						logDayPrescaler = DAYLOGINTERVAL;			  // reset prescaler
+						for (int n = 0; n < NR_MEASVALUES - 1; n++) { // average mc's
+							avGvalues[n] = averager2[n].average() / 1000;
+						}
+						memcpy(logValue.values, avGvalues, sizeof(logValue.values));
+						logValue.timeStamp = timeStamp;
+						dayLog.add(&logValue);
+					}
+				}
+				// printf("mc_1p0: %u ", mc_1p0);
+				// printf("mc_2p5: %u ", mc_2p5);
+				// printf("mc_4p0: %u ", mc_4p0);
+				// printf("mc_10p0: %u ", mc_10p0);
+				// printf("nc_0p5: %u ", nc_0p5);
+				// printf("nc_1p0: %u ", nc_1p0);
+				// printf("nc_2p5: %u ", nc_2p5);
+				// printf("nc_4p0: %u ", nc_4p0);
+				// printf("nc_10p0: %u ", nc_10p0);
+				// printf("typical_particle_size: %u\n", typical_particle_size);
+			}
+
+			// error = sps30_read_device_status_register(&device_status);
+			// if (error != NO_ERROR)
+			// 	printf("Error reading device status\n");
+			// else {
+			// 	if (device_status && (1 << 4))
+			// 		printf("Error fan\n");
+			// 	if (device_status && (1 << 5))
+			// 		printf("Error laser\n");
+			// 	if (device_status && (1 << 21))
+			// 		printf("Error speed\n");
+			// }
+		}
 	}
 }
 
 // CGI stuff
-
-// int printLog(log_t *logToPrint, char *pBuffer, int idx) {
-// 	int len;
-// 	len = sprintf(pBuffer, "%ld,", logToPrint->timeStamp);
-// 	for (int n = 0; n < NR_VALUES; n++)
-// 		len += sprintf(pBuffer + len, "%3.1f,", logToPrint->value[n]);
-// 	return len;
-// }
 
 int printLog(log_t *logToPrint, char *pBuffer) {
 	int len = 0;
@@ -203,6 +243,63 @@ int printLog(log_t *logToPrint, char *pBuffer) {
 		len += sprintf(pBuffer + len, "%3.1f,", logToPrint->values[n]);
 	len += sprintf(pBuffer + len, "\n");
 	return len;
+}
+
+
+// reads all available data from log
+// issued as first request.
+
+
+int getDayLogsScript( char *pBuffer, int count) {
+	int left, len = 0;
+	static int logsToSend = -1;
+	if (logsToSend  < 0 )
+	 	logsToSend = dayLog.getNrLogsToSend();
+	
+	if (logsToSend) {
+		len = 0;
+		do {
+			len += printLog((log_t *) dayLog.readNext(), pBuffer + len);
+			logsToSend--;
+			left = count - len;
+		} while (logsToSend && (left > (len + 50)));
+	}
+	else
+		logsToSend = -1;
+	return len;
+}
+
+
+int getHourLogsScript( char *pBuffer, int count) {
+	int left, len = 0;
+	static int logsToSend = -1;
+	if (logsToSend  < 0 )
+	 	logsToSend = hourLog.getNrLogsToSend();
+	
+	if (logsToSend) {
+		len = 0;
+		do {
+			len += printLog((log_t *) hourLog.readNext(), pBuffer + len);
+			logsToSend--;
+			left = count - len;
+		} while (logsToSend && (left > (len + 50)));
+	}
+	else
+		logsToSend = -1;
+	return len;
+}
+
+
+
+int clearLogScript(char *pBuffer, int count) {
+	dayLog.clear();
+	hourLog.clear();
+	if (scriptState == 0) {
+		strcpy(pBuffer, "OK");
+		scriptState++;
+		return 3;
+	}
+	return 0;
 }
 
 int getRTMeasValuesScript(char *pBuffer, int count) {
@@ -218,15 +315,10 @@ int getRTMeasValuesScript(char *pBuffer, int count) {
 	}
 	return 0;
 }
-// not used
 
-const CGIdesc_t sensorInfoDescriptorTable[] = {{measLabelTxt[0], &lastVal.values[0], FLT, 1},
-												{measLabelTxt[1], &lastVal.values[1], FLT, 1},
-												{measLabelTxt[2], &lastVal.values[2], FLT, 1},
-												{measLabelTxt[3], &lastVal.values[3], FLT, 1},
-												{measLabelTxt[4], &lastVal.values[4], FLT, 1},
-												{NULL, NULL, INT, 0}
-											};
+const CGIdesc_t sensorInfoDescriptorTable[] = {{measLabelTxt[0], &lastVal.values[0], FLT, 1}, {measLabelTxt[1], &lastVal.values[1], FLT, 1},
+											   {measLabelTxt[2], &lastVal.values[2], FLT, 1}, {measLabelTxt[3], &lastVal.values[3], FLT, 1},
+											   {measLabelTxt[4], &lastVal.values[4], FLT, 1}, {NULL, NULL, INT, 0}};
 
 int getSensorInfoScript(char *pBuffer, int count) {
 	int len = 0;
