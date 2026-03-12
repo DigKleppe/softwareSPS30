@@ -184,12 +184,13 @@ void sensorTask(void *parameters) {
 					}
 					memcpy(logValue.values, avGvalues, sizeof(logValue.values));
 					logValue.timeStamp = timeStamp;
-			timeStamp++;
-					for ( int n = 0;n< 100;n++) {
-						logValue.timeStamp = timeStamp++;
-						hourLog.add(&logValue);
-						dayLog.add(&logValue);
-					}
+					hourLog.add(&logValue);
+			// timeStamp++;
+			// 		for ( int n = 0;n< 100;n++) {
+			// 			logValue.timeStamp = timeStamp++;
+			// 			hourLog.add(&logValue);
+			// 			dayLog.add(&logValue);
+			// 		}
 				}
 
 				if (lastMinute != timeinfo.tm_min) {

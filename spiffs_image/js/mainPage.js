@@ -110,24 +110,26 @@ function plotLog(chart, chartData, str) {
 	var timeOffset;
 	var sampleTime;
 	var measTimeLastSample;
-	var arr2 = str.split("\n");
+	if (str) {
+		var arr2 = str.split("\n");
 
-	var nrPoints = arr2.length - 1;
-	if (nrPoints > 0) {
-		var arr = arr2[nrPoints - 1].split(",");
-		measTimeLastSample = arr[0];
+		var nrPoints = arr2.length - 1;
+		if (nrPoints > 0) {
+			var arr = arr2[nrPoints - 1].split(",");
+			measTimeLastSample = arr[0];
 
-		var sec = Date.now();//  / 1000;  // mseconds since 1-1-1970 
-		timeOffset = sec - parseFloat(measTimeLastSample) * 1000;
+			var sec = Date.now();//  / 1000;  // mseconds since 1-1-1970 
+			timeOffset = sec - parseFloat(measTimeLastSample) * 1000;
 
-		for (var p = 0; p < nrPoints; p++) {
-			arr = arr2[p].split(",");
-			if (arr.length >= NRFields) {
-				sampleTime = parseFloat(arr[0]) * 1000 + timeOffset;
-				plot(chartData, arr, sampleTime);
+			for (var p = 0; p < nrPoints; p++) {
+				arr = arr2[p].split(",");
+				if (arr.length >= NRFields) {
+					sampleTime = parseFloat(arr[0]) * 1000 + timeOffset;
+					plot(chartData, arr, sampleTime);
+				}
 			}
+			chart.draw(chartData, mcOptions);
 		}
-		chart.draw(chartData, mcOptions);
 	}
 }
 
@@ -159,21 +161,27 @@ function timer() {
 					if (arr[1] != lastTimeStamp) {
 						lastTimeStamp = arr[1];
 						plotLog(hourChart, hourData, str);
-// average values for dayLog
+						// average values for dayLog
 						var values = str.split(",");
-						for (var m = 0; m < mcLabelTxt.length; m++) {  
-							averagedValues[m] += parseFloat(values[m+1]); // values[0] is timestamp
+						for (var m = 0; m < mcLabelTxt.length; m++) {
+							averagedValues[m] += parseFloat(values[m + 1]); // values[0] is timestamp
 						}
 						nrAverages++;
 
 						dayLogPrescaler--;
-						if (dayLogPrescaler = 0) {
+						if (dayLogPrescaler == 0) {
 							dayLogPrescaler = DAYLOGINTERVAL / REQUESTINTERVAL;
-							for (var m = 0; m < mcLabelTxt.length; m++) {  
-								arr[m+2] = averagedValues[m] / nrAverages;  // arr[1] is timestamp. leave unchanged
+							var str;
+							str = arr[0].toString() + ","; // timestamp
+							for (var m = 0; m < mcLabelTxt.length; m++) {
+								str += (averagedValues[m] / nrAverages).toString();  
+								if (m < mcLabelTxt.length -1)
+									str += ",";
+								else
+									str += "\n";
 							}
 							nrAverages = 0;
-							plotLog(dayChart, dayData, arr);
+							plotLog(dayChart, dayData, str);
 						}
 					}
 				}

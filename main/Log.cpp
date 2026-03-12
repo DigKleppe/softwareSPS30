@@ -4,14 +4,6 @@
  *  Created on: Mar 11, 2026
  *      Author: dig
  */
-
-#include "Log.h"
-/*
- * log.cpp
- *
- *  Created on: Nov 3, 2023
- *      Author: dig
- */
 #include "Log.h"
 #include <cstdint>
 #include <cstdlib>
@@ -21,7 +13,6 @@
 #include <stdio.h>
 #include <string.h>
 
-extern uint32_t timeStamp;
 static const char *TAG = "Log";
 
 Log::Log(int _maxLogValues, int _logTypeSize) {
@@ -67,52 +58,26 @@ void Log::clear() {
 	memset(pLogBuffer, 0, (maxValues * logTypeSize));
 }
 
-int Log::getNrLogs() { return actValues; }
-
 // search oldest log in  cyclic buffer
 // returns nr of logs to send (read)
 
 int Log::getNrLogsToSend() {
-	uint32_t oldTimeStamp = 0;
-	uint32_t time_Stamp;
-	int logsToSend = 0;
-	int n;
-
 	if (pLogBuffer == 0)
 		return -1;
 
-	logRxIdx = 0;
-
-	time_Stamp = (uint32_t)pLogBuffer[logRxIdx];
-
-	if (time_Stamp == 0)
-		return 0; // empty
-
-	oldTimeStamp = 0;
-	for (n = 0; n < maxValues; n++) {
-		time_Stamp = (uint32_t)pLogBuffer[logRxIdx];
-		if (time_Stamp < oldTimeStamp)
-			break;
-		else {
-			oldTimeStamp = time_Stamp;
-		}
-		logRxIdx += logTypeSize;
-	}
-	if (time_Stamp == 0) { // then log not full
-		// not written yet?
+	if (actValues < maxValues) // buffer filled from 0
 		logRxIdx = 0;
-		logsToSend = n;
-	} else
-		logsToSend = maxValues;
+	else
+		logRxIdx = logTxIdx; // cyclic buffer , logTxidx points to oldest value
 
-	ESP_LOGI( TAG ,"logsTosend:%d , actvalues: %d", logsToSend, actValues);
-	return logsToSend;
+	ESP_LOGI(TAG, "logRxidx:%d , actvalues: %d", logRxIdx, actValues);
+
+	return actValues;
 }
 
 void *Log::readNext() {
 	void *p = &pLogBuffer[logRxIdx];
 	logRxIdx += logTypeSize;
-
 	if (logRxIdx >= maxValues * logTypeSize)
 		logRxIdx = 0;
 	return p;

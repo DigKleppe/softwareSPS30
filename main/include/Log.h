@@ -17,7 +17,6 @@ public:
 	int add( void * logValue);
 	void * getLog(int idx);
 	void clear();
-	int getNrLogs();
 	int getNrLogsToSend();
 	void * readNext();
 
