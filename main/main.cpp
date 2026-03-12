@@ -68,18 +68,18 @@ extern "C" void app_main() {
 
 	i2c_master_bus_init(&bus_handle);
 
-	// initGui();
+	initGui();
 
-	// // xTaskCreatePinnedToCore(guiCommonTask, "guicommon", 4096 * 2, NULL, 0, &guiCommonTaskh, 1);
-	// // while (!displayReady)
-	// // 	vTaskDelay(10 / portTICK_PERIOD_MS);
-	// // xTaskCreatePinnedToCore(guiTask, "guiTask", 4096, NULL, 0, &guiTaskh, 1);
-
-	// xTaskCreate(guiCommonTask, "guicommon", 4096 * 2, NULL, 0, &guiCommonTaskh);
+	// xTaskCreatePinnedToCore(guiCommonTask, "guicommon", 4096 * 2, NULL, 0, &guiCommonTaskh, 1);
 	// while (!displayReady)
 	// 	vTaskDelay(10 / portTICK_PERIOD_MS);
+	// xTaskCreatePinnedToCore(guiTask, "guiTask", 4096, NULL, 0, &guiTaskh, 1);
 
-	// xTaskCreate(guiTask, "guiTask", 4096, NULL, 0, &guiTaskh);
+	xTaskCreate(guiCommonTask, "guicommon", 4096 * 2, NULL, 0, &guiCommonTaskh);
+	while (!displayReady)
+		vTaskDelay(10 / portTICK_PERIOD_MS);
+
+	xTaskCreate(guiTask, "guiTask", 4096, NULL, 0, &guiTaskh);
 
 	xTaskCreate(sensorTask, "sensorTask", 2 * 4096, NULL, 0, NULL);
 	
@@ -122,7 +122,7 @@ extern "C" void app_main() {
 			break;
 		}
 
-		// if (xQueueSend(displayMssgBox, &displayMssg, 0) == pdPASS)
-		// 	xQueueReceive(displayReadyMssgBox, &dummy, 500); // if accepted wait until data is displayed
+		if (xQueueSend(displayMssgBox, &displayMssg, 0) == pdPASS)
+			xQueueReceive(displayReadyMssgBox, &dummy, 500); // if accepted wait until data is displayed
 	}
 }

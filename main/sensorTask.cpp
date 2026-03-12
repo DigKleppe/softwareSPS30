@@ -26,8 +26,8 @@
 
 #define CLKSPEED 50000
 
-#define DAYLOGINTERVAL 1  //5   // minutes
-#define HOURLOGINTERVAL 2 //10 // seconds
+#define DAYLOGINTERVAL  5   // minutes
+#define HOURLOGINTERVAL 10 // seconds
 
 #define AVERAGES1 10								  // number of values to average first
 #define AVERAGES2 ((DAYLOGINTERVAL * 60) / AVERAGES1) // number of values to average secondary for daylog
@@ -54,6 +54,9 @@ esp_err_t SPS30AddDeviceToBus(i2c_master_bus_handle_t *bus_handle) {
 
 Averager averager1[NR_MEASVALUES];
 Averager averager2[NR_MEASVALUES];
+
+// Log hourLog(3600 / HOURLOGINTERVAL, sizeof(log_t));	   // 10 sec interval
+// Log dayLog((24 * 60) / DAYLOGINTERVAL, sizeof(log_t)); // 5 min interval
 
 Log hourLog(3600 / HOURLOGINTERVAL, sizeof(log_t));	   // 10 sec interval
 Log dayLog((24 * 60) / DAYLOGINTERVAL, sizeof(log_t)); // 5 min interval
