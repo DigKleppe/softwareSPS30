@@ -26,7 +26,7 @@
 
 #define CLKSPEED 50000
 
-#define DAYLOGINTERVAL  5   // minutes
+#define DAYLOGINTERVAL 5   // minutes
 #define HOURLOGINTERVAL 10 // seconds
 
 #define AVERAGES1 10								  // number of values to average first
@@ -55,20 +55,14 @@ esp_err_t SPS30AddDeviceToBus(i2c_master_bus_handle_t *bus_handle) {
 Averager averager1[NR_MEASVALUES];
 Averager averager2[NR_MEASVALUES];
 
-// Log hourLog(3600 / HOURLOGINTERVAL, sizeof(log_t));	   // 10 sec interval
-// Log dayLog((24 * 60) / DAYLOGINTERVAL, sizeof(log_t)); // 5 min interval
-
 Log hourLog(3600 / HOURLOGINTERVAL, sizeof(log_t));	   // 10 sec interval
 Log dayLog((24 * 60) / DAYLOGINTERVAL, sizeof(log_t)); // 5 min interval
-
-
-// Log hourLog(5 ,sizeof(log_t));	   // 10 sec interval
-//  Log dayLog(15, sizeof(log_t)); // 5 min interval
 
 void sensorTask(void *parameters) {
 	esp_err_t error = ESP_OK;
 	uint32_t device_status = 0;
 	displayMssg_t displayMssg;
+	char str[20];
 	log_t logValue;
 	int lastMinute = -1;
 	int lastSecond = -1;
@@ -78,6 +72,7 @@ void sensorTask(void *parameters) {
 	int logHourPrescaler = 1;
 	float values[NR_MEASVALUES];
 	float avGvalues[NR_MEASVALUES];
+	bool statusError;
 
 	for (int n = 0; n < NR_MEASVALUES; n++) {
 		averager1[n].setAverages(AVERAGES1);
@@ -115,7 +110,7 @@ void sensorTask(void *parameters) {
 	sps30_start_measurement(SPS30_OUTPUT_FORMAT_OUTPUT_FORMAT_FLOAT);
 	vTaskDelay(1 / portTICK_PERIOD_MS);
 	uint16_t data_ready_flag = 0;
-	displayMssg.displayItem = DISPLAY_ITEM_MEASLINE;
+	displayMssg.str1 = str;
 	// uint16_t mc_1p0 = 0;
 	// uint16_t mc_2p5 = 0;
 	// uint16_t mc_4p0 = 0;
@@ -130,110 +125,122 @@ void sensorTask(void *parameters) {
 	//   for (repetition = 0; repetition < 50; repetition++) {
 	while (1) {
 		vTaskDelay(100 / portTICK_PERIOD_MS);
-		error = sps30_read_data_ready_flag(&data_ready_flag);
+		statusError = false;
+		error = sps30_read_device_status_register(&device_status);
 		if (error != NO_ERROR) {
-			printf("error executing read_data_ready_flag(): %i\n", error);
-			vTaskDelay(1000 / portTICK_PERIOD_MS);
-			continue;
+			strcpy(str, "Error reading SPS30");
+			statusError = true;
+		} else {
+			if (device_status & (1 << 4)) {
+				strcpy(str, "Error fan SPS30");
+				statusError = true;
+			}
+			if (device_status & (1 << 5)) {
+				strcpy(str, "Error laser SPS30");
+				statusError = true;
+			}
+			if (device_status & (1 << 21)) {
+				strcpy(str, "Error speed SPS30");
+				statusError = true;
+			}
 		}
-		//	printf("data_ready_flag: %u\n", data_ready_flag);
-		if (data_ready_flag) {
-			// error = sps30_read_measurement_values_uint16(&mc_1p0, &mc_2p5, &mc_4p0, &mc_10p0, &nc_0p5, &nc_1p0, &nc_2p5, &nc_4p0, &nc_10p0,
-			// 											 &typical_particle_size);
-			//	error =
-			// sps30_read_measurement_values_uint16(&values[0],&values[1],&values[2],&values[3],&values[4],&values[5],&values[6],&values[7],&values[8],&values[9]);
-			error = sps30_read_measurement_values_float(&values[0], &values[1], &values[2], &values[3], &values[4], &values[5], &values[6],
+
+		if (statusError) {
+			displayMssg.displayItem = DISPLAY_ITEM_STATUSLINE;
+			if (displayMssgBox != NULL)
+				xQueueSend(displayMssgBox, &displayMssg, 0);
+		} else {
+			
+			displayMssg.displayItem = DISPLAY_ITEM_MEASLINE;
+
+			error = sps30_read_data_ready_flag(&data_ready_flag);
+			if (error != NO_ERROR) {
+				printf("error executing read_data_ready_flag(): %i\n", error);
+				vTaskDelay(1000 / portTICK_PERIOD_MS);
+				continue;
+			}
+			if (data_ready_flag) {
+				error = sps30_read_measurement_values_float(&values[0], &values[1], &values[2], &values[3], &values[4], &values[5], &values[6],
 														&values[7], &values[8], &values[9]);
 
-			if (error != NO_ERROR) {
-				printf("error executing read_measurement_values_uint16(): %i\n", error);
-				continue;
-			} else {
-				for (int n = 0; n < NR_MEASVALUES - 1; n++) { // average mc's
-					averager1[n].write((int)1000.0 * values[n]);
-					avGvalues[n] = averager1[n].average() / 1000;
-				}
-				averager1[NR_MEASVALUES - 1].write((int)1000.0 * values[9]); // add typ. partical size to display and log
-				avGvalues[NR_MEASVALUES - 1] = averager1[NR_MEASVALUES - 1].average() / 1000;
-
-				displayMssg.values = &avGvalues[0];
-				if (displayMssgBox != NULL)
-					xQueueSend(displayMssgBox, &displayMssg, 0);
-				memcpy(lastVal.values, avGvalues, sizeof(logValue.values));
-				lastVal.timeStamp = timeStamp;
-			}
-
-			time(&now);
-			localtime_r(&now, &timeinfo);
-			if (lastMinute == -1) {
-				lastMinute = timeinfo.tm_min;
-				lastSecond = timeinfo.tm_sec;
-			}
-			if (lastSecond != timeinfo.tm_sec) {
-				lastSecond = timeinfo.tm_sec; // every second
-
-				if (logHourPrescaler > 0)
-					logHourPrescaler--;
-				else {
-					logHourPrescaler = HOURLOGINTERVAL;
-
-					for (int n = 0; n < NR_MEASVALUES - 1; n++) {
-						avGvalues[n] = averager1[n].average();
-						averager2[n].write(avGvalues[n]); // second order for daylog
+				if (error != NO_ERROR) {
+					printf("error executing read_measurement_values_uint16(): %i\n", error);
+					continue;
+				} else {
+					for (int n = 0; n < NR_MEASVALUES - 1; n++) { // average mc's
+						averager1[n].write((int)1000.0 * values[n]);
+						avGvalues[n] = averager1[n].average() / 1000;
 					}
+					averager1[NR_MEASVALUES - 1].write((int)1000.0 * values[9]); // add typ. partical size to display and log
+					avGvalues[NR_MEASVALUES - 1] = averager1[NR_MEASVALUES - 1].average() / 1000;
 
-					for (int n = 0; n < NR_MEASVALUES - 1; n++) {	  // average mc's
-						avGvalues[n] = averager1[n].average() / 1000; // contains last samples
-					}
-					memcpy(logValue.values, avGvalues, sizeof(logValue.values));
-					logValue.timeStamp = timeStamp;
-					hourLog.add(&logValue);
-			// timeStamp++;
-			// 		for ( int n = 0;n< 100;n++) {
-			// 			logValue.timeStamp = timeStamp++;
-			// 			hourLog.add(&logValue);
-			// 			dayLog.add(&logValue);
-			// 		}
+					displayMssg.values = &avGvalues[0];
+					if (displayMssgBox != NULL)
+						xQueueSend(displayMssgBox, &displayMssg, 0);
+					memcpy(lastVal.values, avGvalues, sizeof(logValue.values));
+					lastVal.timeStamp = timeStamp;
 				}
 
-				if (lastMinute != timeinfo.tm_min) {
-					lastMinute = timeinfo.tm_min; // every minute
+				time(&now);
+				localtime_r(&now, &timeinfo);
+				if (lastMinute == -1) {
+					lastMinute = timeinfo.tm_min;
+					lastSecond = timeinfo.tm_sec;
+				}
+				if (lastSecond != timeinfo.tm_sec) {
+					lastSecond = timeinfo.tm_sec; // every second
 
-					if (logDayPrescaler > 0) {
-						logDayPrescaler--;
-					} else {
-						logDayPrescaler = DAYLOGINTERVAL;			  // reset prescaler
-						for (int n = 0; n < NR_MEASVALUES - 1; n++) { // average mc's
-							avGvalues[n] = averager2[n].average() / 1000;
+					if (logHourPrescaler > 0)
+						logHourPrescaler--;
+					else {
+						logHourPrescaler = HOURLOGINTERVAL;
+
+						for (int n = 0; n < NR_MEASVALUES - 1; n++) {
+							avGvalues[n] = averager1[n].average();
+							averager2[n].write(avGvalues[n]); // second order for daylog
+						}
+
+						for (int n = 0; n < NR_MEASVALUES - 1; n++) {	  // average mc's
+							avGvalues[n] = averager1[n].average() / 1000; // contains last samples
 						}
 						memcpy(logValue.values, avGvalues, sizeof(logValue.values));
 						logValue.timeStamp = timeStamp;
-						dayLog.add(&logValue);
+						hourLog.add(&logValue);
+						// timeStamp++;
+						// 		for ( int n = 0;n< 100;n++) {
+						// 			logValue.timeStamp = timeStamp++;
+						// 			hourLog.add(&logValue);
+						// 			dayLog.add(&logValue);
+						// 		}
 					}
-				}
-				// printf("mc_1p0: %u ", mc_1p0);
-				// printf("mc_2p5: %u ", mc_2p5);
-				// printf("mc_4p0: %u ", mc_4p0);
-				// printf("mc_10p0: %u ", mc_10p0);
-				// printf("nc_0p5: %u ", nc_0p5);
-				// printf("nc_1p0: %u ", nc_1p0);
-				// printf("nc_2p5: %u ", nc_2p5);
-				// printf("nc_4p0: %u ", nc_4p0);
-				// printf("nc_10p0: %u ", nc_10p0);
-				// printf("typical_particle_size: %u\n", typical_particle_size);
-			}
 
-			// error = sps30_read_device_status_register(&device_status);
-			// if (error != NO_ERROR)
-			// 	printf("Error reading device status\n");
-			// else {
-			// 	if (device_status && (1 << 4))
-			// 		printf("Error fan\n");
-			// 	if (device_status && (1 << 5))
-			// 		printf("Error laser\n");
-			// 	if (device_status && (1 << 21))
-			// 		printf("Error speed\n");
-			// }
+					if (lastMinute != timeinfo.tm_min) {
+						lastMinute = timeinfo.tm_min; // every minute
+
+						if (logDayPrescaler > 0) {
+							logDayPrescaler--;
+						} else {
+							logDayPrescaler = DAYLOGINTERVAL;			  // reset prescaler
+							for (int n = 0; n < NR_MEASVALUES - 1; n++) { // average mc's
+								avGvalues[n] = averager2[n].average() / 1000;
+							}
+							memcpy(logValue.values, avGvalues, sizeof(logValue.values));
+							logValue.timeStamp = timeStamp;
+							dayLog.add(&logValue);
+						}
+					}
+					// printf("mc_1p0: %u ", mc_1p0);
+					// printf("mc_2p5: %u ", mc_2p5);
+					// printf("mc_4p0: %u ", mc_4p0);
+					// printf("mc_10p0: %u ", mc_10p0);
+					// printf("nc_0p5: %u ", nc_0p5);
+					// printf("nc_1p0: %u ", nc_1p0);
+					// printf("nc_2p5: %u ", nc_2p5);
+					// printf("nc_4p0: %u ", nc_4p0);
+					// printf("nc_10p0: %u ", nc_10p0);
+					// printf("typical_particle_size: %u\n", typical_particle_size);
+				}
+			}
 		}
 	}
 }
@@ -249,51 +256,44 @@ int printLog(log_t *logToPrint, char *pBuffer) {
 	return len;
 }
 
-
 // reads all available data from log
 // issued as first request.
 
-
-int getDayLogsScript( char *pBuffer, int count) {
+int getDayLogsScript(char *pBuffer, int count) {
 	int left, len = 0;
 	static int logsToSend = -1;
-	if (logsToSend  < 0 )
-	 	logsToSend = dayLog.getNrLogsToSend();
-	
+	if (logsToSend < 0)
+		logsToSend = dayLog.getNrLogsToSend();
+
 	if (logsToSend) {
 		len = 0;
 		do {
-			len += printLog((log_t *) dayLog.readNext(), pBuffer + len);
+			len += printLog((log_t *)dayLog.readNext(), pBuffer + len);
 			logsToSend--;
 			left = count - len;
 		} while (logsToSend && (left > (len + 50)));
-	}
-	else
+	} else
 		logsToSend = -1;
 	return len;
 }
 
-
-int getHourLogsScript( char *pBuffer, int count) {
+int getHourLogsScript(char *pBuffer, int count) {
 	int left, len = 0;
 	static int logsToSend = -1;
-	if (logsToSend  < 0 )
-	 	logsToSend = hourLog.getNrLogsToSend();
-	
+	if (logsToSend < 0)
+		logsToSend = hourLog.getNrLogsToSend();
+
 	if (logsToSend) {
 		len = 0;
 		do {
-			len += printLog((log_t *) hourLog.readNext(), pBuffer + len);
+			len += printLog((log_t *)hourLog.readNext(), pBuffer + len);
 			logsToSend--;
 			left = count - len;
 		} while (logsToSend && (left > (len + 50)));
-	}
-	else
+	} else
 		logsToSend = -1;
 	return len;
 }
-
-
 
 int clearLogScript(char *pBuffer, int count) {
 	dayLog.clear();

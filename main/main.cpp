@@ -123,6 +123,6 @@ extern "C" void app_main() {
 		}
 
 		if (xQueueSend(displayMssgBox, &displayMssg, 0) == pdPASS)
-			xQueueReceive(displayReadyMssgBox, &dummy, 500); // if accepted wait until data is displayed
+			xQueueReceive(displayReadyMssgBox, &dummy, 500); 
 	}
 }
