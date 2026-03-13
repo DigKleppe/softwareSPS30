@@ -18,9 +18,9 @@
 //#include "Stream.h"
 
 #include "StatusLine.h"
-#include "NavigArrows.h"
-#include "ClockDisplay.h"
+#include "MeasDisplay.h"
 
+#define NR_ITEMS 4
 
 class MainScreen { //public Stream{
 public:
@@ -32,15 +32,17 @@ public:
 	void setStatusLine (const char * text);
 
 private:
+	MeasDisplay * measDisplay[NR_ITEMS ];
 	char  measValue1[MAXVALUECHARS+3]; // extra space for a symbol (3 characters)
-	static void event_handler(lv_obj_t * obj, lv_event_t event);
-	static void screenClicked(lv_event_t * event);
+//	static void event_handler(lv_obj_t * obj, lv_event_t event);
+//	static void screenClicked(lv_event_t * event);
 	lv_obj_t * backGround;
 	lv_obj_t * screen;
 //	lv_obj_t * infoLabel;
 //	NavigArrows * navigArrows;
 	StatusLine * statusLine;
-	static void event_handler(lv_event_t * e);
+//	static void event_handler(lv_event_t * e);
+
 };
 
 #endif /* COMPONENTS_GUI_MEASSCREEN_H_ */

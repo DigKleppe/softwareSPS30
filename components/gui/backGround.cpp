@@ -8,15 +8,6 @@
 #include "backGround.h"
 #include <stdio.h>
 
-//#ifdef LGL_SIMULATOR
-//#include "lv_drv_conf.h"
-
-
-
-//#else
-//	#include "../lvgl_esp32_drivers/lvgl_helpers.h"
-//#endif
-
 static int cntr;
 static void screenClicked(lv_event_t *e) {
 	cntr++;

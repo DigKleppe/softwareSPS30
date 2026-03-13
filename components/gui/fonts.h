@@ -10,10 +10,18 @@
 #ifndef GUI_FONTS_H_
 #define GUI_FONTS_H_
 
+
+extern const lv_font_t typewriter75bold;
+extern const lv_font_t typewriter75;
 extern const lv_font_t cantarelRegular20;
 extern const lv_font_t cantarel75;
 extern const lv_font_t cantarel60;
+extern const lv_font_t cantarel50;
+extern const lv_font_t cantarel30;
+extern const lv_font_t cantarel35;
 extern const lv_font_t cantarel25;
+
+extern const lv_font_t cantarelLight25;
 extern const lv_font_t cantarelLight75;
 extern const lv_font_t cantarelLight60;
 extern const lv_font_t cantarelLight50;
@@ -26,6 +34,10 @@ extern const  lv_font_t awsome44;
 extern const  lv_font_t Awsome50;
 extern const  lv_font_t awsome60;
 extern const  lv_font_t awsome75;
+extern const  lv_font_t lv_font_montserrat_20;
+extern const  lv_font_t lv_font_montserrat_22;
+extern const  lv_font_t lv_font_montserrat_24;
+extern const  lv_font_t lv_font_montserrat_30;
 
 extern const  lv_font_t AwsomeSymbols40;
 

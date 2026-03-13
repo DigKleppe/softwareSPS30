@@ -7,8 +7,15 @@
 
 #ifndef GUI_STYLES_H_
 #define GUI_STYLES_H_
+#ifdef LV_CONF_INCLUDE_SIMPLE
 #include "lvgl.h"
+#else
+#include "lvgl/lvgl.h"
+#endif
 #include "fonts.h"
+
+// font 0xb5, 0xb3, 0x2a-0x7A,0x3A9,0x3BC  
+
 
 extern lv_style_t style_background;
 extern lv_style_t styleValue; // value in meas screen
@@ -24,15 +31,15 @@ extern lv_style_t styleInfo;
 extern lv_style_t styleSymbol;
 
 //  lv_palette_main(LV_PALETTE_GREY)
-#define DEFAULTVALUECOLOR			lv_color_make(255, 255, 255)
+#define DEFAULTVALUECOLOR			lv_color_white() // lv_color_make(255, 255, 255)
 #define DEFAULTBORDERCOLOR			lv_color_make(0, 255, 0)
-#define DEFAULTBACKGROUNDCOLOR 		lv_palette_lighten(LV_PALETTE_GREY,1) 
+#define DEFAULTBACKGROUNDCOLOR 		lv_color_black()
 
-#define MEASFONT					cantarel25   //cantarelLight75  //dejavusansEL75  cantarel25
-#define MEASUNITFONT				cantarelLight50 // insloata60_4bppSub
-#define MEASNAMEFONT 				cantarel25  //cantarelRegular20 // lv_font_montserrat_20
+#define MEASFONT					typewriter75 //cantarelLight75  //dejavusansEL75
+#define MEASUNITFONT				cantarel25  //cantarelLight50 // insloata60_4bppSub
+#define MEASNAMEFONT 				cantarel30  //lv_font_montserrat_24  //cantarelRegular20 // lv_font_montserrat_20
 #define MEASVALUECOLOR				DEFAULTVALUECOLOR
-#define MEASVALUEBGCOLOR			lv_color_black()
+#define MEASVALUEBGCOLOR			DEFAULTBACKGROUNDCOLOR
 #define MEASNAMECOLOR				MEASVALUECOLOR
 
 #define SPINBUTTONFONT				dejavusansEL44

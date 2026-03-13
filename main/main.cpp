@@ -13,7 +13,6 @@
 #include <freertos/FreeRTOS.h>
 #include <freertos/task.h>
 
-#include "guiTask.h"
 #include "i2c.h"
 #include "sensorTask.h"
 
