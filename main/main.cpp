@@ -36,7 +36,7 @@ extern "C" void app_main() {
 	bool toggle = false;
 	int dummy;
 	displayMssg_t displayMssg;
-	char str[20];
+	char str[45];
 	bool ipShown = false;
 	int ipShowTimer;
 
@@ -81,7 +81,7 @@ extern "C" void app_main() {
 	xTaskCreate(guiTask, "guiTask", 4096, NULL, 0, &guiTaskh);
 
 	xTaskCreate(sensorTask, "sensorTask", 2 * 4096, NULL, 0, NULL);
-	
+
 	displayMssg.str1 = str;
 
 	while (1) {
@@ -90,13 +90,12 @@ extern "C" void app_main() {
 		displayMssg.displayItem = DISPLAY_ITEM_STATUSLINE;
 		switch (connectStatus) {
 		case CONNECT_READY:
-			if ( !ipShown) {
+			if (!ipShown) {
 				sprintf(str, "%s", myIpAddress);
 				ipShowTimer = IPSHOWTIME;
 				ipShown = true;
-			}
-			else {
-				if ( ipShowTimer > 0)
+			} else {
+				if (ipShowTimer > 0)
 					ipShowTimer--;
 				else
 					str[0] = 0; // clear statusline
@@ -111,6 +110,18 @@ extern "C" void app_main() {
 				sprintf(str, "Druk WPS op modem");
 			break;
 
+		case CONNECT_AP:  // accespoint active
+			toggle = !toggle;
+			if (toggle)
+				sprintf(str, "Wifi netwerk");
+			else
+				sprintf(str, "%s actief" , userSettings.moduleName);
+			break;
+
+		case CONNECT_READY_AP:
+			sprintf(str, "FSM.local of 192.168.24.1");
+			break;
+
 		default:
 			ipShown = false;
 			toggle = !toggle;
@@ -122,6 +133,6 @@ extern "C" void app_main() {
 		}
 
 		if (xQueueSend(displayMssgBox, &displayMssg, 0) == pdPASS)
-			xQueueReceive(displayReadyMssgBox, &dummy, 500); 
+			xQueueReceive(displayReadyMssgBox, &dummy, 500);
 	}
 }

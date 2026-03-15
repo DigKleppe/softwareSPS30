@@ -62,6 +62,9 @@ typedef enum {
 	IP_RECEIVED,
 	CHECKFIRMWARE,
 	CONNECT_READY,
+	CONNECT_AP,
+	CONNECT_READY_AP
+	
 } connectStatus_t;
 
 extern volatile connectStatus_t connectStatus;

@@ -52,6 +52,10 @@ function clear() {
 	dayData.removeRows(0, dayData.getNumberOfRows());
 	mcChart.draw(dayData, mcOptions);
 }
+function forgetWifi() {
+	getItem("forgetWifi");
+}
+
 
 //var formatter_time= new google.visualization.DateFormat({formatType: 'long'});
 // channel 1 .. 5
