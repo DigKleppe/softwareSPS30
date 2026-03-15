@@ -31,6 +31,7 @@
 
 #define AVERAGES1 10								  // number of values to average first
 #define AVERAGES2 ((DAYLOGINTERVAL * 60) / AVERAGES1) // number of values to average secondary for daylog
+#define SKIPFIRSTSAMPLES 10;						  // skip from log
 
 static const char *TAG = "sensorTask";
 
@@ -73,6 +74,7 @@ void sensorTask(void *parameters) {
 	float values[NR_MEASVALUES];
 	float avGvalues[NR_MEASVALUES];
 	bool statusError;
+	int skipFirstSamplesFromLog = SKIPFIRSTSAMPLES;
 
 	for (int n = 0; n < NR_MEASVALUES; n++) {
 		averager1[n].setAverages(AVERAGES1);
@@ -150,7 +152,7 @@ void sensorTask(void *parameters) {
 			if (displayMssgBox != NULL)
 				xQueueSend(displayMssgBox, &displayMssg, 0);
 		} else {
-			
+
 			displayMssg.displayItem = DISPLAY_ITEM_MEASLINE;
 
 			error = sps30_read_data_ready_flag(&data_ready_flag);
@@ -161,84 +163,87 @@ void sensorTask(void *parameters) {
 			}
 			if (data_ready_flag) {
 				error = sps30_read_measurement_values_float(&values[0], &values[1], &values[2], &values[3], &values[4], &values[5], &values[6],
-														&values[7], &values[8], &values[9]);
-
-				if (error != NO_ERROR) {
-					printf("error executing read_measurement_values_uint16(): %i\n", error);
-					continue;
-				} else {
-					for (int n = 0; n < NR_MEASVALUES - 1; n++) { // average mc's
-						averager1[n].write((int)1000.0 * values[n]);
-						avGvalues[n] = averager1[n].average() / 1000;
-					}
-					averager1[NR_MEASVALUES - 1].write((int)1000.0 * values[9]); // add typ. partical size to display and log
-					avGvalues[NR_MEASVALUES - 1] = averager1[NR_MEASVALUES - 1].average() / 1000;
-
-					displayMssg.values = &avGvalues[0];
-					if (displayMssgBox != NULL)
-						xQueueSend(displayMssgBox, &displayMssg, 0);
-					memcpy(lastVal.values, avGvalues, sizeof(logValue.values));
-					lastVal.timeStamp = timeStamp;
-				}
-
-				time(&now);
-				localtime_r(&now, &timeinfo);
-				if (lastMinute == -1) {
-					lastMinute = timeinfo.tm_min;
-					lastSecond = timeinfo.tm_sec;
-				}
-				if (lastSecond != timeinfo.tm_sec) {
-					lastSecond = timeinfo.tm_sec; // every second
-
-					if (logHourPrescaler > 0)
-						logHourPrescaler--;
-					else {
-						logHourPrescaler = HOURLOGINTERVAL;
-
-						for (int n = 0; n < NR_MEASVALUES - 1; n++) {
-							avGvalues[n] = averager1[n].average();
-							averager2[n].write(avGvalues[n]); // second order for daylog
+															&values[7], &values[8], &values[9]);
+				if (skipFirstSamplesFromLog)
+					skipFirstSamplesFromLog--;
+				else {
+					if (error != NO_ERROR) {
+						printf("error executing read_measurement_values_uint16(): %i\n", error);
+						continue;
+					} else {
+						for (int n = 0; n < NR_MEASVALUES - 1; n++) { // average mc's
+							averager1[n].write((int)1000.0 * values[n]);
+							avGvalues[n] = averager1[n].average() / 1000;
 						}
+						averager1[NR_MEASVALUES - 1].write((int)1000.0 * values[9]); // add typ. partical size to display and log
+						avGvalues[NR_MEASVALUES - 1] = averager1[NR_MEASVALUES - 1].average() / 1000;
 
-						for (int n = 0; n < NR_MEASVALUES - 1; n++) {	  // average mc's
-							avGvalues[n] = averager1[n].average() / 1000; // contains last samples
-						}
-						memcpy(logValue.values, avGvalues, sizeof(logValue.values));
-						logValue.timeStamp = timeStamp;
-						hourLog.add(&logValue);
-						// timeStamp++;
-						// 		for ( int n = 0;n< 100;n++) {
-						// 			logValue.timeStamp = timeStamp++;
-						// 			hourLog.add(&logValue);
-						// 			dayLog.add(&logValue);
-						// 		}
+						displayMssg.values = &avGvalues[0];
+						if (displayMssgBox != NULL)
+							xQueueSend(displayMssgBox, &displayMssg, 0);
+						memcpy(lastVal.values, avGvalues, sizeof(logValue.values));
+						lastVal.timeStamp = timeStamp;
 					}
 
-					if (lastMinute != timeinfo.tm_min) {
-						lastMinute = timeinfo.tm_min; // every minute
+					time(&now);
+					localtime_r(&now, &timeinfo);
+					if (lastMinute == -1) {
+						lastMinute = timeinfo.tm_min;
+						lastSecond = timeinfo.tm_sec;
+					}
+					if (lastSecond != timeinfo.tm_sec) {
+						lastSecond = timeinfo.tm_sec; // every second
 
-						if (logDayPrescaler > 0) {
-							logDayPrescaler--;
-						} else {
-							logDayPrescaler = DAYLOGINTERVAL;			  // reset prescaler
-							for (int n = 0; n < NR_MEASVALUES - 1; n++) { // average mc's
-								avGvalues[n] = averager2[n].average() / 1000;
+						if (logHourPrescaler > 0)
+							logHourPrescaler--;
+						else {
+							logHourPrescaler = HOURLOGINTERVAL;
+
+							for (int n = 0; n < NR_MEASVALUES - 1; n++) {
+								avGvalues[n] = averager1[n].average();
+								averager2[n].write(avGvalues[n]); // second order for daylog
+							}
+
+							for (int n = 0; n < NR_MEASVALUES - 1; n++) {	  // average mc's
+								avGvalues[n] = averager1[n].average() / 1000; // contains last samples
 							}
 							memcpy(logValue.values, avGvalues, sizeof(logValue.values));
 							logValue.timeStamp = timeStamp;
-							dayLog.add(&logValue);
+							hourLog.add(&logValue);
+							// timeStamp++;
+							// 		for ( int n = 0;n< 100;n++) {
+							// 			logValue.timeStamp = timeStamp++;
+							// 			hourLog.add(&logValue);
+							// 			dayLog.add(&logValue);
+							// 		}
 						}
+
+						if (lastMinute != timeinfo.tm_min) {
+							lastMinute = timeinfo.tm_min; // every minute
+
+							if (logDayPrescaler > 0) {
+								logDayPrescaler--;
+							} else {
+								logDayPrescaler = DAYLOGINTERVAL;			  // reset prescaler
+								for (int n = 0; n < NR_MEASVALUES - 1; n++) { // average mc's
+									avGvalues[n] = averager2[n].average() / 1000;
+								}
+								memcpy(logValue.values, avGvalues, sizeof(logValue.values));
+								logValue.timeStamp = timeStamp;
+								dayLog.add(&logValue);
+							}
+						}
+						// printf("mc_1p0: %u ", mc_1p0);
+						// printf("mc_2p5: %u ", mc_2p5);
+						// printf("mc_4p0: %u ", mc_4p0);
+						// printf("mc_10p0: %u ", mc_10p0);
+						// printf("nc_0p5: %u ", nc_0p5);
+						// printf("nc_1p0: %u ", nc_1p0);
+						// printf("nc_2p5: %u ", nc_2p5);
+						// printf("nc_4p0: %u ", nc_4p0);
+						// printf("nc_10p0: %u ", nc_10p0);
+						// printf("typical_particle_size: %u\n", typical_particle_size);
 					}
-					// printf("mc_1p0: %u ", mc_1p0);
-					// printf("mc_2p5: %u ", mc_2p5);
-					// printf("mc_4p0: %u ", mc_4p0);
-					// printf("mc_10p0: %u ", mc_10p0);
-					// printf("nc_0p5: %u ", nc_0p5);
-					// printf("nc_1p0: %u ", nc_1p0);
-					// printf("nc_2p5: %u ", nc_2p5);
-					// printf("nc_4p0: %u ", nc_4p0);
-					// printf("nc_10p0: %u ", nc_10p0);
-					// printf("typical_particle_size: %u\n", typical_particle_size);
 				}
 			}
 		}
