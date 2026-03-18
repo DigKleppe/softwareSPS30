@@ -4,22 +4,23 @@
         <meta http-equiv="content-type" content="text/html; charset=UTF-8">
         <title>Fijnstofmeter</title>
         <link rel="stylesheet" type="text/css" href="styles.css">
-        <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
-        <script src="js/mainPage.js" type="text/javascript" charset="utf-8"></script>
+        <!-- <script src="js/mainPage.js" type="text/javascript" charset="utf-8"></script> -->
+         <script src="js/chart-utils.min.js" type="text/javascript" charset="utf-8"></script>
+        <script src="js/chart.umd.min.js" type="text/javascript" charset="utf-8"></script>
+        <script src="js/chartPage.js" type="text/javascript" charset="utf-8"></script>  
         <script src="js/common.js" type="text/javascript" charset="utf-8"></script>
-        <script type="text/javascript">
-		google.charts.load('current', {
-			'packages': ['corechart']
-		});
-		google.charts.setOnLoadCallback(initChart);
-        </script>
-    </head>
+   </head>
+       
+<script>
+      initChart();
+</script>
+<div>
+    <canvas id="hourChart" style="width: 100%; height: 800px" ></canvas>
+    <canvas id="dayChart" style="width: 100%; height: 800px" ></canvas>
+</div>
     <body>
        	<table class="styled-table" id="sensorInfoTable""></table>
 	    <br>
-        <div id="hourChart" style="width: 100%; height: 800px"></div>
-        <div id="dayChart" style="width: 100%; height: 800px"></div>
-        <br>
         <button class="button-3" onclick="clearLog()">log wissen</button>
         <button class="button-3" onclick="clearChart()">grafiek wissen</button>
         	<br>
