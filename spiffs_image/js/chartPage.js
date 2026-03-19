@@ -30,7 +30,8 @@ function initChart() {
         var ctx = document.getElementById("dayChart");
         dayChart = new Chart(ctx, configDay);
         if (SIMULATE)
-            plotTest();
+            //  plotTest();
+            simplot();
         timer();
         startTimer();
     });
@@ -38,6 +39,51 @@ function initChart() {
 
 
 const data = {
+    datasets: [
+        {
+            label: 'PM1',
+            data: [],
+            borderColor: Utils.CHART_COLORS.red,
+            backgroundColor: Utils.transparentize(Utils.CHART_COLORS.red, 0.5),
+            borderWidth: lineWidth,
+            borderRadius: Number.MAX_VALUE,
+            borderSkipped: false,
+            cubicInterpolationMode: 'monotone',
+        },
+        {
+            label: 'PM2.5',
+            data: [],
+            borderColor: Utils.CHART_COLORS.yellow,
+            backgroundColor: Utils.transparentize(Utils.CHART_COLORS.orange, 0.5),
+            borderWidth: lineWidth,
+            borderRadius: 5,
+            borderSkipped: false,
+            cubicInterpolationMode: 'monotone',
+        },
+        {
+            label: 'PM4',
+            data: [],
+            borderColor: Utils.CHART_COLORS.blue,
+            backgroundColor: Utils.transparentize(Utils.CHART_COLORS.blue, 0.5),
+            borderWidth: lineWidth,
+            borderRadius: 5,
+            borderSkipped: false,
+            cubicInterpolationMode: 'monotone',
+        },
+        {
+            label: 'PM10',
+            data: [], 
+            borderColor: Utils.CHART_COLORS.green,
+            backgroundColor: Utils.transparentize(Utils.CHART_COLORS.green, 0.5),
+            borderWidth: lineWidth,
+            borderRadius: 5,
+            borderSkipped: false,
+            cubicInterpolationMode: 'monotone',
+        }
+    ]
+}
+
+const data2 = {
     datasets: [
         {
             label: 'PM1',
@@ -103,7 +149,7 @@ const configHour = {
 
 const configDay = {
     type: 'line',
-    data: data,
+    data: data2,
     options: {
         responsive: true,
         pointStyle: false,
@@ -187,6 +233,10 @@ function plotLog(chart, str) {
     var timeOffset;
     var sampleTime;
     var measTimeLastSample;
+
+    if (chart == dayChart)
+        console.log("Log daychart " + str);
+
     if (str) {
         var arr2 = str.split("\n");
 
@@ -268,7 +318,6 @@ function timer() {
         firstTime = false;
     }
 }
-
 function plotTest() {
     var value = [0, 0, 0, 0];
     for (let i = 0; i < 100; ++i) {
@@ -283,16 +332,29 @@ function plotTest() {
     dayChart.update();
 }
 
+var presc = 3;
 var simVal = 0;
+var simTs = 0;
+
 function simplot() {
-    var value = [0, 0, 0, 0];
-    for (let idx = 0; idx < 4; idx++) {
-        value[idx] = 1 + Math.cos(simVal) + idx;
+
+    var value;
+    for (let idx = 0; idx < 100; idx++) {
+        value= (simTs).toString() +',';
+
+        for (let idx2 = 0; idx2 < 4; idx2++) {
+            value = value + ((1 + Math.cos(simVal) + idx2).toString() +',');
+
+        }
+        value = value +'\n';
+        simTs++;
+        simVal +=0.02;
     }
-    var sec = Date.now();//  / 1000;  // mseconds since 1-1-1970 date
-    plot(hourChart, value, sec);
-    plot(dayChart, value, sec);
-    simVal = simVal + 0.2;
-    hourChart.update();
-    dayChart.update();
+    if ( presc-- == 0) {
+        plotLog (dayChart,value);
+        presc = 3;
+    }
+
+    plotLog (hourChart,value);
+
 }
