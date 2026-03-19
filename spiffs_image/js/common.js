@@ -1,5 +1,5 @@
-//var SIMULATE = true;
-var SIMULATE = false;
+var SIMULATE = true;
+//var SIMULATE = false;
 
 function sendItem(item) {
 	console.log("sendItem: " + item);
