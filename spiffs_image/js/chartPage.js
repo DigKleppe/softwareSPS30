@@ -2,31 +2,35 @@ var hourChart;
 var dayChart;
 var mcLabelTxt = ["PM1", "PM2.5", "PM4", "PM10"];
 var NRITEMS = 4;
-var MAXPOINTS = 50;
+
+const SECONDSPERTICK = (5 * 60);// log interval 
+const LOGDAYS = 1;
+const MAXPOINTS = (LOGDAYS * 24 * 60 * 60 / SECONDSPERTICK);
 
 
-var firstTime = true;
 var INFOTABLENAME = "sensorInfoTable";
 var REQUESTINTERVAL = 1;  // sec
 var DAYLOGINTERVAL = (5 * 60); // min
 var lastTimeStamp = 0;
 var dayLogPrescaler = 1;
 var firstRequest = true;
+var firstTime = true; // for table
 
+var averagedValues = [0, 0, 0, 0];
+var nrAverages = 0;
 
 const Utils = ChartUtils.init();
-
-const DATA_COUNT = 7
-const NUMBER_CFG = { count: MAXPOINTS, min: 0, max: 2000 }
+const lineWidth = 3;
 
 
 function initChart() {
     window.addEventListener('DOMContentLoaded', function () {
         var ctx = document.getElementById("hourChart");
-        hourChart = new Chart(ctx, config);
+        hourChart = new Chart(ctx, configHour);
         var ctx = document.getElementById("dayChart");
-        dayChart = new Chart(ctx, config);
-       // plotTest();
+        dayChart = new Chart(ctx, configDay);
+        if (SIMULATE)
+            plotTest();
         timer();
         startTimer();
     });
@@ -37,44 +41,48 @@ const data = {
     datasets: [
         {
             label: 'PM1',
-            data: Utils.numbers(NUMBER_CFG),
+            data: [],// Utils.numbers(NUMBER_CFG),
             borderColor: Utils.CHART_COLORS.red,
             backgroundColor: Utils.transparentize(Utils.CHART_COLORS.red, 0.5),
-            borderWidth: 2,
+            borderWidth: lineWidth,
             borderRadius: Number.MAX_VALUE,
-            borderSkipped: false
+            borderSkipped: false,
+            cubicInterpolationMode: 'monotone',
         },
         {
             label: 'PM2.5',
-            data: Utils.numbers(NUMBER_CFG),
+            data: [],// Utils.numbers(NUMBER_CFG),
             borderColor: Utils.CHART_COLORS.yellow,
             backgroundColor: Utils.transparentize(Utils.CHART_COLORS.orange, 0.5),
-            borderWidth: 2,
+            borderWidth: lineWidth,
             borderRadius: 5,
-            borderSkipped: false
+            borderSkipped: false,
+            cubicInterpolationMode: 'monotone',
         },
         {
             label: 'PM4',
-            data: Utils.numbers(NUMBER_CFG),
+            data: [],//Utils.numbers(NUMBER_CFG),
             borderColor: Utils.CHART_COLORS.blue,
             backgroundColor: Utils.transparentize(Utils.CHART_COLORS.blue, 0.5),
-            borderWidth: 2,
+            borderWidth: lineWidth,
             borderRadius: 5,
-            borderSkipped: false
+            borderSkipped: false,
+            cubicInterpolationMode: 'monotone',
         },
         {
             label: 'PM10',
-            data: Utils.numbers(NUMBER_CFG),
+            data: [], //Utils.numbers(NUMBER_CFG),
             borderColor: Utils.CHART_COLORS.green,
             backgroundColor: Utils.transparentize(Utils.CHART_COLORS.green, 0.5),
-            borderWidth: 2,
+            borderWidth: lineWidth,
             borderRadius: 5,
-            borderSkipped: false
+            borderSkipped: false,
+            cubicInterpolationMode: 'monotone',
         }
     ]
 }
 
-const config = {
+const configHour = {
     type: 'line',
     data: data,
     options: {
@@ -87,24 +95,29 @@ const config = {
             },
             title: {
                 display: true,
-                text: 'Chart.js Bar Chart'
+                text: 'Uurgrafiek'
             }
         }
     }
 }
 
-function plotTest() {
-    var value = [0, 0, 0, 0];
-    for (let i = 0; i < 100; ++i) {
-        for (let idx = 0; idx < 4; idx++) {
-            value[idx] = Math.cos(i / 20) + idx;
+const configDay = {
+    type: 'line',
+    data: data,
+    options: {
+        responsive: true,
+        pointStyle: false,
+        animations: false,
+        plugins: {
+            legend: {
+                position: 'top'
+            },
+            title: {
+                display: true,
+                text: '24 uurgrafiek'
+            }
         }
-        var sec = Date.now();//  / 1000;  // mseconds since 1-1-1970 date
-        plot(hourChart, value, sec + i * 10000);
-        plot(datChart, value, sec + i * 10000);
     }
-    hourChart.update();
-    dayChart.update();
 }
 
 function clear() {
@@ -136,7 +149,10 @@ function clearLog() {
 }
 
 function startTimer() {
-    setInterval(function () { timer() }, REQUESTINTERVAL * 1000);
+    if (SIMULATE)
+        setInterval(function () { timer() }, 500);
+    else
+        setInterval(function () { timer() }, REQUESTINTERVAL * 1000);
 }
 function forgetWifi() {
     getItem("forgetWifi");
@@ -186,6 +202,7 @@ function plotLog(chart, str) {
                 arr = arr2[p].split(",");
                 if (arr.length >= NRITEMS) {
                     sampleTime = parseFloat(arr[0]) * 1000 + timeOffset;
+                    arr.splice(0, 1); // remove timestamp (arr[0[]) from array
                     plot(chart, arr, sampleTime);
                 }
             }
@@ -199,7 +216,7 @@ function timer() {
     var str;
 
     if (SIMULATE) {
-        //	simplot();
+        simplot();
     }
     else {
         if (firstRequest) {
@@ -250,4 +267,32 @@ function timer() {
         getInfo("getSensorInfo", INFOTABLENAME, firstTime);
         firstTime = false;
     }
+}
+
+function plotTest() {
+    var value = [0, 0, 0, 0];
+    for (let i = 0; i < 100; ++i) {
+        for (let idx = 0; idx < 4; idx++) {
+            value[idx] = Math.cos(i / 10) + idx;
+        }
+        var sec = Date.now();//  / 1000;  // mseconds since 1-1-1970 date
+        plot(hourChart, value, sec + i * 10000);
+        plot(dayChart, value, sec + i * 10000);
+    }
+    hourChart.update();
+    dayChart.update();
+}
+
+var simVal = 0;
+function simplot() {
+    var value = [0, 0, 0, 0];
+    for (let idx = 0; idx < 4; idx++) {
+        value[idx] = 1 + Math.cos(simVal) + idx;
+    }
+    var sec = Date.now();//  / 1000;  // mseconds since 1-1-1970 date
+    plot(hourChart, value, sec);
+    plot(dayChart, value, sec);
+    simVal = simVal + 0.2;
+    hourChart.update();
+    dayChart.update();
 }
