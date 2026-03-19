@@ -8,10 +8,10 @@
 #include "MeasDisplay.h"
 
 
-#define PADDING 18
+#define PADDING 	20
 #define ITEMHEIGHT	98
 #define ITEMWIDTH	200
-#define FIRSTY 		CLOCKDISPLAYHEIGHT
+
 
 MeasDisplay::MeasDisplay( lv_obj_t * parent, int y, const char *name, const char * unit, const char * formatStr)
 {
@@ -20,7 +20,7 @@ MeasDisplay::MeasDisplay( lv_obj_t * parent, int y, const char *name, const char
 
 	if ( name != NULL) {
 		nameLabel = lv_label_create(_parent);
-		lv_obj_set_pos(nameLabel, 10,y);
+		lv_obj_set_pos(nameLabel, 0,y);
 		lv_obj_add_style(nameLabel, &styleMeasName, 0);
 		lv_label_set_text(nameLabel, name);
 		lv_obj_set_style_text_align(nameLabel, LV_TEXT_ALIGN_RIGHT, 0);

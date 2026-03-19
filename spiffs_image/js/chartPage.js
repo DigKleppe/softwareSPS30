@@ -1,27 +1,27 @@
-var hourChart;
-var dayChart;
-var mcLabelTxt = ["PM1", "PM2.5", "PM4", "PM10"];
-var NRITEMS = 4;
 
 const SECONDSPERTICK = (5 * 60);// log interval 
 const LOGDAYS = 1;
-const MAXPOINTS = (LOGDAYS * 24 * 60 * 60 / SECONDSPERTICK);
+const MAXDAYPOINTS = (LOGDAYS * 24 * 60 * 60 / SECONDSPERTICK);
+const MAXHOURPOINTS = 3600;
+
+const INFOTABLENAME = "sensorInfoTable";
+const REQUESTINTERVAL = 1;  // sec
+const DAYLOGINTERVAL = (5 * 60); // min
+
+const NRITEMS = 4;
+const lineWidth = 3;
 
 
-var INFOTABLENAME = "sensorInfoTable";
-var REQUESTINTERVAL = 1;  // sec
-var DAYLOGINTERVAL = (5 * 60); // min
+var hourChart;
+var dayChart;
 var lastTimeStamp = 0;
 var dayLogPrescaler = 1;
 var firstRequest = true;
 var firstTime = true; // for table
-
 var averagedValues = [0, 0, 0, 0];
 var nrAverages = 0;
 
 const Utils = ChartUtils.init();
-const lineWidth = 3;
-
 
 function initChart() {
     window.addEventListener('DOMContentLoaded', function () {
@@ -87,7 +87,7 @@ const data2 = {
     datasets: [
         {
             label: 'PM1',
-            data: [],// Utils.numbers(NUMBER_CFG),
+            data: [], 
             borderColor: Utils.CHART_COLORS.red,
             backgroundColor: Utils.transparentize(Utils.CHART_COLORS.red, 0.5),
             borderWidth: lineWidth,
@@ -97,7 +97,7 @@ const data2 = {
         },
         {
             label: 'PM2.5',
-            data: [],// Utils.numbers(NUMBER_CFG),
+            data: [],
             borderColor: Utils.CHART_COLORS.yellow,
             backgroundColor: Utils.transparentize(Utils.CHART_COLORS.orange, 0.5),
             borderWidth: lineWidth,
@@ -107,7 +107,7 @@ const data2 = {
         },
         {
             label: 'PM4',
-            data: [],//Utils.numbers(NUMBER_CFG),
+            data: [],
             borderColor: Utils.CHART_COLORS.blue,
             backgroundColor: Utils.transparentize(Utils.CHART_COLORS.blue, 0.5),
             borderWidth: lineWidth,
@@ -117,7 +117,7 @@ const data2 = {
         },
         {
             label: 'PM10',
-            data: [], //Utils.numbers(NUMBER_CFG),
+            data: [],
             borderColor: Utils.CHART_COLORS.green,
             backgroundColor: Utils.transparentize(Utils.CHART_COLORS.green, 0.5),
             borderWidth: lineWidth,
@@ -206,10 +206,14 @@ function forgetWifi() {
 
 // plots one sample ( array of 4 items)
 function plot(chart, values, timeStamp) {
-    var row;
+    var maxPoints;
+    if ( chart == dayChart)
+        maxPoints = MAXDAYPOINTS;
+    else
+        maxPoints = MAXHOURPOINTS;
+
     const data = chart.data;
     if (data.datasets.length > 0) {
-
         for (let index = 0; index < data.datasets.length; ++index) {
             var value = parseFloat(values[index]);
             data.datasets[index].data.push(value);
@@ -219,7 +223,7 @@ function plot(chart, values, timeStamp) {
         var labelText = date.getHours() + ":" + date.getMinutes() + ":" + date.getSeconds();
         data.labels.push(labelText);
 
-        if (data.labels.length > MAXPOINTS) {
+        if (data.labels.length > maxPoints) {
             data.labels.splice(0, 1);
             for (let index = 0; index < data.datasets.length; ++index) {
                 data.datasets[index].data.splice(0, 1);
@@ -287,7 +291,7 @@ function timer() {
                         plotLog(hourChart, str);
                         // average values for dayLog
                         var values = str.split(",");
-                        for (var m = 0; m < mcLabelTxt.length; m++) {
+                        for (var m = 0; m < NRITEMS; m++) {
                             averagedValues[m] += parseFloat(values[m + 1]); // values[0] is timestamp
                         }
                         nrAverages++;
@@ -297,9 +301,9 @@ function timer() {
                             dayLogPrescaler = DAYLOGINTERVAL / REQUESTINTERVAL;
                             var str;
                             str = arr[0].toString() + ","; // timestamp
-                            for (var m = 0; m < mcLabelTxt.length; m++) {
+                            for (var m = 0; m < NRITEMS; m++) {
                                 str += (averagedValues[m] / nrAverages).toString();
-                                if (m < mcLabelTxt.length - 1)
+                                if (m < NRITEMS - 1)
                                     str += ",";
                                 else
                                     str += "\n";

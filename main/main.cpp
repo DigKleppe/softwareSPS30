@@ -119,7 +119,7 @@ extern "C" void app_main() {
 			break;
 
 		case CONNECT_READY_AP:
-			sprintf(str, "FSM.local 192.168.4.1");
+			sprintf(str, "AP IP:192.168.4.1");
 			break;
 
 		default:
