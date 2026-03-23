@@ -66,9 +66,6 @@ extern "C" void app_main() {
 	wifiConnect();
 
 	i2c_master_bus_init(&bus_handle);
-
-	initGui();
-
 	// xTaskCreatePinnedToCore(guiCommonTask, "guicommon", 4096 * 2, NULL, 0, &guiCommonTaskh, 1);
 	// while (!displayReady)
 	// 	vTaskDelay(10 / portTICK_PERIOD_MS);
@@ -134,5 +131,9 @@ extern "C" void app_main() {
 
 		if (xQueueSend(displayMssgBox, &displayMssg, 0) == pdPASS)
 			xQueueReceive(displayReadyMssgBox, &dummy, 500);
+
+		ESP_LOGI(TAG, "Free: %d" ,heap_caps_get_free_size(MALLOC_CAP_DMA));
+		ESP_LOGI(TAG, "MinFree: %d" ,heap_caps_get_minimum_free_size(MALLOC_CAP_DMA));
+
 	}
 }
