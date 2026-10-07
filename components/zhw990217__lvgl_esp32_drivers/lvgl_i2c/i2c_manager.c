@@ -34,8 +34,8 @@ SOFTWARE.
 #include "freertos/FreeRTOS.h"
 #include "freertos/semphr.h"
 #include "freertos/task.h"
-#include <driver/i2c.h>
-
+//#include <driver/i2c.h>
+#include <driver/i2c_master.h>
 #include "sdkconfig.h"
 
 #include "i2c_manager.h"
