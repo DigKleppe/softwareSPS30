@@ -53,6 +53,7 @@ void guiTask(void *pvParameter) {
 
 	while (!displayReady)
 		vTaskDelay(100 / portTICK_PERIOD_MS);
+		
 
 	mainScreen = new MainScreen();
 	vTaskDelay(50 / portTICK_PERIOD_MS);

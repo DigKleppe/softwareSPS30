@@ -2,7 +2,7 @@
     "C_Cpp.intelliSenseEngine": "default",
     "idf.espIdfPath": "/home/dig/esp/v5.5.2/esp-idf",
     "idf.openOcdConfigs": [
-        "board/esp32s3-builtin.cfg"
+        "board/esp32c3-builtin.cfg"
     ],
     "idf.port": "/dev/ttyACM0",
     "idf.toolsPath": "/home/dig/.espressif",
@@ -10,8 +10,14 @@
     "idf.pythonInstallPath": "/usr/bin/python3",
     "idf.currentSetup": "/home/dig/.espressif/v5.5.4/esp-idf",
     "idf.customExtraVars": {
-        "IDF_TARGET": "esp32s3"
+        "IDF_TARGET": "esp32c3"
     },
-    "C_Cpp.errorSquiggles": "disabled"
+    "C_Cpp.errorSquiggles": "disabled",
+    "clangd.path": "/home/dig/.espressif/tools/esp-clang/esp-19.1.2_20250312/esp-clang/bin/clangd",
+    "clangd.arguments": [
+      "--background-index",
+      "--query-driver=**",
+      "--compile-commands-dir=/mnt/linuxData/projecten/fijnstofmeter/softwareSPS30/build"
+    ]
 }
 

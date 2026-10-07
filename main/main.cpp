@@ -40,6 +40,7 @@ extern "C" void app_main() {
 	bool ipShown = false;
 	int ipShowTimer;
 
+
 	esp_err_t err = init_spiffs();
 	if (err != ESP_OK) {
 		ESP_LOGE(TAG, "Failed to initialize SPIFFS (%s)", esp_err_to_name(err));
@@ -64,6 +65,7 @@ extern "C" void app_main() {
 	saveSettings();
 
 	wifiConnect();
+
 
 	i2c_master_bus_init(&bus_handle);
 	// xTaskCreatePinnedToCore(guiCommonTask, "guicommon", 4096 * 2, NULL, 0, &guiCommonTaskh, 1);
