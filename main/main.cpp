@@ -18,7 +18,7 @@
 
 #include "settings.h"
 #include "wifiConnect.h"
-
+#include "time.h"
 #include "guiTask.h"
 
 TaskHandle_t guiCommonTaskh;
@@ -39,6 +39,9 @@ extern "C" void app_main() {
 	char str[45];
 	bool ipShown = false;
 	int ipShowTimer;
+		time_t now = 0;
+	struct tm timeinfo;
+	int lastSecond = 0;
 
 	esp_err_t err = init_spiffs();
 	if (err != ESP_OK) {
@@ -82,58 +85,65 @@ extern "C" void app_main() {
 	displayMssg.str1 = str;
 
 	while (1) {
-		vTaskDelay(1000);
-		timeStamp++;
-		displayMssg.displayItem = DISPLAY_ITEM_STATUSLINE;
-		switch (connectStatus) {
-		case CONNECT_READY:
-			if (!ipShown) {
-				sprintf(str, "%s", myIpAddress);
-				ipShowTimer = IPSHOWTIME;
-				ipShown = true;
-			} else {
-				if (ipShowTimer > 0)
-					ipShowTimer--;
+		vTaskDelay(100);
+
+		time(&now);
+		localtime_r(&now, &timeinfo);
+
+		if (lastSecond != timeinfo.tm_sec) {
+			lastSecond = timeinfo.tm_sec; // every second
+			timeStamp++;
+		
+			displayMssg.displayItem = DISPLAY_ITEM_STATUSLINE;
+			switch (connectStatus) {
+			case CONNECT_READY:
+				if (!ipShown) {
+					sprintf(str, "%s", myIpAddress);
+					ipShowTimer = IPSHOWTIME;
+					ipShown = true;
+				} else {
+					if (ipShowTimer > 0)
+						ipShowTimer--;
+					else
+						str[0] = 0; // clear statusline
+				}
+				break;
+
+			case WPS_ACTIVE:
+				toggle = !toggle;
+				if (toggle)
+					sprintf(str, "Geen wifi");
 				else
-					str[0] = 0; // clear statusline
+					sprintf(str, "Druk WPS op modem");
+				break;
+
+			case CONNECT_AP: // accespoint active
+				toggle = !toggle;
+				if (toggle)
+					sprintf(str, "Wifi netwerk");
+				else
+					sprintf(str, "%s actief", userSettings.moduleName);
+				break;
+
+			case CONNECT_READY_AP:
+				sprintf(str, "AP IP:192.168.4.1");
+				break;
+
+			default:
+				ipShown = false;
+				toggle = !toggle;
+				if (toggle)
+					sprintf(str, "Verbinden met:");
+				else
+					snprintf(str, (volatile size_t){sizeof(str)}, wifiSettings.SSID);
+				break;
 			}
-			break;
 
-		case WPS_ACTIVE:
-			toggle = !toggle;
-			if (toggle)
-				sprintf(str, "Geen wifi");
-			else
-				sprintf(str, "Druk WPS op modem");
-			break;
+			if (xQueueSend(displayMssgBox, &displayMssg, 0) == pdPASS)
+				xQueueReceive(displayReadyMssgBox, &dummy, 500);
 
-		case CONNECT_AP:  // accespoint active
-			toggle = !toggle;
-			if (toggle)
-				sprintf(str, "Wifi netwerk");
-			else
-				sprintf(str, "%s actief" , userSettings.moduleName);
-			break;
-
-		case CONNECT_READY_AP:
-			sprintf(str, "AP IP:192.168.4.1");
-			break;
-
-		default:
-			ipShown = false;
-			toggle = !toggle;
-			if (toggle)
-				sprintf(str, "Verbinden met:");
-			else
-				snprintf(str, (volatile size_t){sizeof(str)}, wifiSettings.SSID);
-			break;
+			// ESP_LOGI(TAG, "Free: %d", heap_caps_get_free_size(MALLOC_CAP_DMA));
+			// ESP_LOGI(TAG, "MinFree: %d", heap_caps_get_minimum_free_size(MALLOC_CAP_DMA));
 		}
-
-		if (xQueueSend(displayMssgBox, &displayMssg, 0) == pdPASS)
-			xQueueReceive(displayReadyMssgBox, &dummy, 500);
-
-		ESP_LOGI(TAG, "Free: %d" ,heap_caps_get_free_size(MALLOC_CAP_DMA));
-		ESP_LOGI(TAG, "MinFree: %d" ,heap_caps_get_minimum_free_size(MALLOC_CAP_DMA));
-
 	}
 }

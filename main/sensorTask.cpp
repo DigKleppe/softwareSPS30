@@ -195,7 +195,7 @@ void sensorTask(void *parameters) {
 						if (logHourPrescaler > 0)
 							logHourPrescaler--;
 						else {
-							logHourPrescaler = HOURLOGINTERVAL;
+							logHourPrescaler = HOURLOGINTERVAL-1;
 
 							for (int n = 0; n < NR_MEASVALUES - 1; n++) {
 								avGvalues[n] = averager1[n].average();
@@ -221,7 +221,7 @@ void sensorTask(void *parameters) {
 							if (logDayPrescaler > 0) {
 								logDayPrescaler--;
 							} else {
-								logDayPrescaler = DAYLOGINTERVAL;			  // reset prescaler
+								logDayPrescaler = DAYLOGINTERVAL-1;			  // reset prescaler
 								for (int n = 0; n < NR_MEASVALUES - 1; n++) { // average mc's
 									avGvalues[n] = averager2[n].average() / 1000;
 								}
